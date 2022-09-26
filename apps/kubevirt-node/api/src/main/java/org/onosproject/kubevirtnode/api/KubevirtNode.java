@@ -16,7 +16,6 @@
 package org.onosproject.kubevirtnode.api;
 
 import org.onlab.packet.IpAddress;
-import org.onlab.packet.MacAddress;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.PortNumber;
 
@@ -190,34 +189,11 @@ public interface KubevirtNode {
     String gatewayBridgeName();
 
     /**
-     *  Returns the name of the elb bridge.
-     *  Using this bridge, TEG internally communicates with data IP's in worker nodes.
+     *  Returns the kubernetesExternalLbInterface.
      *
-     * @return gateway bridge name
+     * @return kubernetesExternalLbInterface
      */
-    String elbBridgeName();
-
-    /**
-     *  Returns the internal Ip Address of TEG for kubernetes external lb purpose.
-     *
-     * @return elb ip address
-     */
-    IpAddress elbIp();
-
-    /**
-     *  Returns the gateway IP of the elb IP.
-     *
-     * @return elb gw ip address
-     */
-    IpAddress elbGwIp();
-
-    /**
-     *  Returns the mac address of the elb gw.
-     *
-     * @return elb gw mac address
-     */
-    MacAddress elbGwMac();
-
+    KubernetesExternalLbInterface kubernetesExternalLbInterface();
 
     /**
      * Builder of new node entity.
@@ -310,36 +286,13 @@ public interface KubevirtNode {
          */
         KubevirtNode.Builder gatewayBridgeName(String gatewayBridgeName);
 
-        /**
-         * Returns kubevirt node builder with supplied elb bridge name.
-         *
-         * @param elbBridgeName elb bridge name
-         * @return kubevirt node builder
-         */
-        KubevirtNode.Builder elbBridgeName(String elbBridgeName);
 
         /**
-         * Returns kubevirt node builder with supplied supplied elb Ip address.
+         * Returns kubevirt node builder with supplied supplied kubernetesExternalLbInterface.
          *
-         * @param elbIp elb ip address
+         * @param kubernetesExternalLbInterface kubernetesExternalLbInterface
          * @return kubevirt node builder
          */
-        KubevirtNode.Builder elbIp(IpAddress elbIp);
-
-        /**
-         * Returns kubevirt node builder with supplied supplied elb gw Ip address.
-         *
-         * @param elbGwIp elb gw ip address
-         * @return kubevirt node builder
-         */
-        KubevirtNode.Builder elbGwIp(IpAddress elbGwIp);
-
-        /**
-         * Returns kubevirt node builder with supplied supplied elb gw MAC address.
-         *
-         * @param elbGwMac elb gw mac address
-         * @return kubevirt node builder
-         */
-        KubevirtNode.Builder elbGwMac(MacAddress elbGwMac);
+        KubevirtNode.Builder kubernetesExternalLbInterface(KubernetesExternalLbInterface kubernetesExternalLbInterface);
     }
 }

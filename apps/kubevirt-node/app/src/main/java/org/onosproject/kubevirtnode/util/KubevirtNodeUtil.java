@@ -15,6 +15,8 @@
  */
 package org.onosproject.kubevirtnode.util;
 
+import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,12 +29,12 @@ import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.apache.commons.lang.StringUtils;
-import com.eclipsesource.json.JsonArray;
-import com.eclipsesource.json.JsonObject;
 import org.onlab.packet.IpAddress;
 import org.onlab.packet.MacAddress;
+import org.onosproject.kubevirtnode.api.DefaultKubernetesExternalLbInterface;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtNode;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtPhyInterface;
+import org.onosproject.kubevirtnode.api.KubernetesExternalLbInterface;
 import org.onosproject.kubevirtnode.api.KubevirtApiConfig;
 import org.onosproject.kubevirtnode.api.KubevirtNode;
 import org.onosproject.kubevirtnode.api.KubevirtNodeState;
@@ -85,11 +87,11 @@ public final class KubevirtNodeUtil {
     private static final String DATA_IP_KEY = SONA_PROJECT_DOMAIN + "/data-ip";
     private static final String GATEWAY_CONFIG_KEY = SONA_PROJECT_DOMAIN + "/gateway-config";
     private static final String GATEWAY_BRIDGE_NAME = "gatewayBridgeName";
-    private static final String ELB_CONFIG_KEY = SONA_PROJECT_DOMAIN + "/elb-config";
-    private static final String ELB_BRIDGE_NAME = "elbBridgeName";
-    private static final String ELB_IP_KEY = SONA_PROJECT_DOMAIN + "/elb-ip";
-    private static final String ELB_GW_IP_KEY = SONA_PROJECT_DOMAIN + "/elb-gw-ip";
-    private static final String ELB_GW_MAC_KEY = SONA_PROJECT_DOMAIN + "/elb-gw-mac";
+    private static final String EXTERNAL_LB_CONFIG_KEY = SONA_PROJECT_DOMAIN + "/externalLb-config";
+    private static final String EXTERNAL_LB_BRIDGE_NAME = "externalLbBridgeName";
+    private static final String EXTERNAL_LB_IP_KEY = SONA_PROJECT_DOMAIN + "/externalLb-ip";
+    private static final String EXTERNAL_LB_GATEWAY_IP_KEY = SONA_PROJECT_DOMAIN + "/externalLb-gateway-ip";
+    private static final String EXTERNAL_LB_GATEWAY_MAC_KEY = SONA_PROJECT_DOMAIN + "/externalLb-gateway-mac";
     private static final String NETWORK_KEY = "network";
     private static final String INTERFACE_KEY = "interface";
     private static final String PHYS_BRIDGE_ID = "physBridgeId";
@@ -393,14 +395,16 @@ public final class KubevirtNodeUtil {
         Set<KubevirtPhyInterface> phys = new HashSet<>();
         String gatewayBridgeName = null;
 
-        String elbConfig = annots.get(ELB_CONFIG_KEY);
-        String elbIpStr = annots.get(ELB_IP_KEY);
-        String elbGwIpStr = annots.get(ELB_GW_IP_KEY);
-        String elbGwMacStr = annots.get(ELB_GW_MAC_KEY);
+        String elbConfig = annots.get(EXTERNAL_LB_CONFIG_KEY);
+        String elbIpStr = annots.get(EXTERNAL_LB_IP_KEY);
+        String elbGwIpStr = annots.get(EXTERNAL_LB_GATEWAY_IP_KEY);
+        String elbGwMacStr = annots.get(EXTERNAL_LB_GATEWAY_MAC_KEY);
         String elbBridgeName = null;
         IpAddress elbIp = null;
         IpAddress elbGwIp = null;
         MacAddress elbGwMac = null;
+
+        KubernetesExternalLbInterface kubernetesExternalLbInterface = null;
 
         try {
             if (physnetConfig != null) {
@@ -443,15 +447,20 @@ public final class KubevirtNodeUtil {
                 if (elbConfig != null && elbIpStr != null && elbGwIpStr != null) {
                     JsonNode elbJsonNode = new ObjectMapper().readTree(elbConfig);
 
-                    elbBridgeName = elbJsonNode.get(ELB_BRIDGE_NAME).asText();
+                    elbBridgeName = elbJsonNode.get(EXTERNAL_LB_BRIDGE_NAME).asText();
                     elbIp = IpAddress.valueOf(elbIpStr);
                     elbGwIp = IpAddress.valueOf(elbGwIpStr);
-                }
 
-                if (elbGwMacStr != null) {
-                    elbGwMac = MacAddress.valueOf(elbGwMacStr);
-                } else {
-                    //TODO: add the logic that retrieves the MAC address of the elb gw ip.
+                    if (elbGwMacStr != null) {
+                        elbGwMac = MacAddress.valueOf(elbGwMacStr);
+                    }
+
+                    kubernetesExternalLbInterface = DefaultKubernetesExternalLbInterface.builder()
+                            .externalLbBridgeName(elbBridgeName)
+                            .externalLbIp(elbIp)
+                            .externallbGwIp(elbGwIp)
+                            .externalLbGwMac(elbGwMac)
+                            .build();
                 }
             }
         } catch (JsonProcessingException e) {
@@ -483,10 +492,7 @@ public final class KubevirtNodeUtil {
                 .state(KubevirtNodeState.ON_BOARDED)
                 .phyIntfs(phys)
                 .gatewayBridgeName(gatewayBridgeName)
-                .elbBridgeName(elbBridgeName)
-                .elbIp(elbIp)
-                .elbGwIp(elbGwIp)
-                .elbGwMac(elbGwMac)
+                .kubernetesExternalLbInterface(kubernetesExternalLbInterface)
                 .build();
     }
 

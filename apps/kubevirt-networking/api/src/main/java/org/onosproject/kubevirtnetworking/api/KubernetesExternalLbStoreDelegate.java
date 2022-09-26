@@ -18,7 +18,7 @@ package org.onosproject.kubevirtnetworking.api;
 import org.onosproject.store.StoreDelegate;
 
 /**
- * Kubernetes external lb store delegate abstraction.
+ * Kubernetes external load balancer store delegate abstraction.
  */
 public interface KubernetesExternalLbStoreDelegate extends StoreDelegate<KubernetesExternalLbEvent> {
 }

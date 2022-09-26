@@ -17,6 +17,8 @@ package org.onosproject.kubevirtnetworking.api;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
+import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
 
 import java.util.Objects;
 import java.util.Set;
@@ -28,24 +30,32 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
 
-    private static final String NOT_NULL_MSG = "Loadbalancer % cannot be null";
+    private static final String NOT_NULL_MSG = "External Loadbalancer % cannot be null";
 
     private final String serviceName;
-    private final String loadbalancerIp;
+    private final IpAddress loadbalancerIp;
     private final Set<Integer> nodePortSet;
     private final Set<Integer> portSet;
     private final Set<String> endpointSet;
     private final String electedGateway;
+    private final IpAddress loadbalancerGwIp;
+    private final MacAddress loadbalancerGwMac;
+    private final String electedWorker;
 
-    public DefaultKubernetesExternalLb(String serviceName, String loadbalancerIp,
+    public DefaultKubernetesExternalLb(String serviceName, IpAddress loadbalancerIp,
                                        Set<Integer> nodePortSet, Set<Integer> portSet,
-                                       Set<String> endpointSet, String electedGateway) {
+                                       Set<String> endpointSet, String electedGateway,
+                                       String electedWorker,
+                                       IpAddress loadbalancerGwIp, MacAddress loadbalancerGwMac) {
         this.serviceName = serviceName;
         this.loadbalancerIp = loadbalancerIp;
         this.nodePortSet = nodePortSet;
         this.portSet = portSet;
         this.endpointSet = endpointSet;
         this.electedGateway = electedGateway;
+        this.electedWorker = electedWorker;
+        this.loadbalancerGwIp = loadbalancerGwIp;
+        this.loadbalancerGwMac = loadbalancerGwMac;
     }
 
     @Override
@@ -54,7 +64,7 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
     }
 
     @Override
-    public String loadBalancerIp() {
+    public IpAddress loadBalancerIp() {
         return loadbalancerIp;
     }
 
@@ -79,6 +89,21 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
     }
 
     @Override
+    public String electedWorker() {
+        return electedWorker;
+    }
+
+    @Override
+    public IpAddress loadBalancerGwIp() {
+        return loadbalancerGwIp;
+    }
+
+    @Override
+    public MacAddress loadBalancerGwMac() {
+        return loadbalancerGwMac;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -92,7 +117,10 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
                 Objects.equals(nodePortSet, that.nodePortSet) &&
                 Objects.equals(portSet, that.portSet) &&
                 Objects.equals(endpointSet, that.endpointSet) &&
-                Objects.equals(electedGateway, that.electedGateway);
+                Objects.equals(electedGateway, that.electedGateway) &&
+                Objects.equals(electedWorker, that.electedWorker) &&
+                Objects.equals(loadbalancerGwIp, that.loadbalancerGwIp) &&
+                Objects.equals(loadbalancerGwMac, that.loadbalancerGwMac);
     }
 
     @Override
@@ -104,8 +132,27 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
                 .portSet(portSet)
                 .endpointSet(endpointSet)
                 .electedGateway(electedGateway)
+                .electedWorker(electedWorker)
+                .loadBalancerGwIp(loadbalancerGwIp)
+                .loadBalancerGwMac(loadbalancerGwMac)
                 .build();
     }
+
+    @Override
+    public KubernetesExternalLb updateElectedWorker(String electedWorker) {
+        return DefaultKubernetesExternalLb.builder()
+                .serviceName(serviceName)
+                .loadBalancerIp(loadbalancerIp)
+                .nodePortSet(nodePortSet)
+                .portSet(portSet)
+                .endpointSet(endpointSet)
+                .electedGateway(electedGateway)
+                .electedWorker(electedWorker)
+                .loadBalancerGwIp(loadbalancerGwIp)
+                .loadBalancerGwMac(loadbalancerGwMac)
+                .build();
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(serviceName, loadbalancerIp);
@@ -120,6 +167,9 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
                 .add("port", portSet)
                 .add("endpointSet", endpointSet)
                 .add("electedGateway", electedGateway)
+                .add("electedWorker", electedWorker)
+                .add("loadbalancer gateway ip", loadbalancerGwIp)
+                .add("loadbalancer gateway Mac", loadbalancerGwMac)
                 .toString();
     }
 
@@ -129,11 +179,14 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
 
     public static final class Builder implements KubernetesExternalLb.Builder {
         private String serviceName;
-        private String loadbalancerIp;
+        private IpAddress loadbalancerIp;
         private Set<Integer> nodePortSet;
         private Set<Integer> portSet;
         private Set<String> endpointSet;
         private String electedGateway;
+        private String electedWorker;
+        private IpAddress loadbalancerGwip;
+        private MacAddress loadbalancerGwMac;
 
         private Builder() {
         }
@@ -146,7 +199,8 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
             checkArgument(!portSet.isEmpty(), NOT_NULL_MSG, "portSet");
 
             return new DefaultKubernetesExternalLb(serviceName, loadbalancerIp,
-                    nodePortSet, portSet, endpointSet, electedGateway);
+                    nodePortSet, portSet, endpointSet, electedGateway, electedWorker,
+                    loadbalancerGwip, loadbalancerGwMac);
         }
 
         @Override
@@ -156,7 +210,7 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
         }
 
         @Override
-        public Builder loadBalancerIp(String loadBalancerIp) {
+        public Builder loadBalancerIp(IpAddress loadBalancerIp) {
             this.loadbalancerIp = loadBalancerIp;
             return this;
         }
@@ -179,8 +233,27 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
             return this;
         }
 
+        @Override
         public Builder electedGateway(String electedGateway) {
             this.electedGateway = electedGateway;
+            return this;
+        }
+
+        @Override
+        public Builder electedWorker(String electedWorker) {
+            this.electedWorker = electedWorker;
+            return this;
+        }
+
+        @Override
+        public Builder loadBalancerGwIp(IpAddress loadbalancerGwip) {
+            this.loadbalancerGwip = loadbalancerGwip;
+            return this;
+        }
+
+        @Override
+        public Builder loadBalancerGwMac(MacAddress loadbalancerGwMac) {
+            this.loadbalancerGwMac = loadbalancerGwMac;
             return this;
         }
     }

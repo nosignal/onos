@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onosproject.kubevirtnetworking.api;
+package org.onosproject.kubevirtnode.api;
 
-import org.onosproject.event.EventListener;
+import org.onosproject.store.StoreDelegate;
 
 /**
- * Listener for kubernetes external load balancer event.
+ * Kubernetes external lb config store delegate abstraction.
  */
-public interface KubernetesExternalLbListener extends EventListener<KubernetesExternalLbEvent> {
+public interface KubernetesExternalLbConfigStoreDelegate extends StoreDelegate<KubernetesExternalLbConfigEvent> {
 }
