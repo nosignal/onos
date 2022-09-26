@@ -5,5 +5,9 @@
   "dataIp": "172.16.130.4",
   "integrationBridge": "of:00000000000000a1",
   "tunnelBridge": "of:00000000000000a2",
-  "gatewayBridgeName": "gateway"
+  "gatewayBridgeName": "gateway",
+  "elbBridgeName": "elbnet",
+  "elbIp": "192.168.0.2",
+  "elbGwIp": "192.168.0.1",
+  "elbGwMac": "aa:bb:cc:dd:ee:ff"
 }

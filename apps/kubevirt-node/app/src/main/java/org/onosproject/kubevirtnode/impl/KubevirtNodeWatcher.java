@@ -185,10 +185,8 @@ public class KubevirtNodeWatcher {
                 return;
             }
 
-            log.trace("Process node {} creating event from API server.",
-                    node.getMetadata().getName());
-
             KubevirtNode kubevirtNode = buildKubevirtNode(node);
+            log.info("buildKubevirtNode: {}", kubevirtNode.toString());
             if (kubevirtNode.type() == WORKER || kubevirtNode.type() == GATEWAY) {
                 if (!kubevirtNodeAdminService.hasNode(kubevirtNode.hostname())) {
                     kubevirtNodeAdminService.createNode(kubevirtNode);

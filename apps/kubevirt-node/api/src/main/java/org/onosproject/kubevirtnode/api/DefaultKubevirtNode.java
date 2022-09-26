@@ -19,6 +19,7 @@ import com.google.common.base.MoreObjects;
 import org.apache.commons.lang.StringUtils;
 import org.onlab.osgi.DefaultServiceDirectory;
 import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.Port;
 import org.onosproject.net.PortNumber;
@@ -58,6 +59,10 @@ public class DefaultKubevirtNode implements KubevirtNode {
     private final KubevirtNodeState state;
     private final Collection<KubevirtPhyInterface> phyIntfs;
     private final String gatewayBridgeName;
+    private final String elbBridgeName;
+    private final IpAddress elbIp;
+    private final IpAddress elbGwIp;
+    private final MacAddress elbGwMac;
 
     /**
      * A default constructor of kubevirt node.
@@ -72,13 +77,18 @@ public class DefaultKubevirtNode implements KubevirtNode {
      * @param state             node state
      * @param phyIntfs          physical interfaces
      * @param gatewayBridgeName  gateway bridge name
+     * @param elbBridgeName     elb bridge name
+     * @param elbIp             elb IP address
+     * @param elbGwIp           elb gw IP address
+     * @param elbGwMac          elb gw MAC address
      */
     protected DefaultKubevirtNode(String clusterName, String hostname, Type type,
                                   DeviceId intgBridge, DeviceId tunBridge,
                                   IpAddress managementIp, IpAddress dataIp,
                                   KubevirtNodeState state,
                                   Collection<KubevirtPhyInterface> phyIntfs,
-                                  String gatewayBridgeName) {
+                                  String gatewayBridgeName, String elbBridgeName, IpAddress elbIp,
+                                  IpAddress elbGwIp, MacAddress elbGwMac) {
         this.clusterName = clusterName;
         this.hostname = hostname;
         this.type = type;
@@ -89,6 +99,10 @@ public class DefaultKubevirtNode implements KubevirtNode {
         this.state = state;
         this.phyIntfs = phyIntfs;
         this.gatewayBridgeName = gatewayBridgeName;
+        this.elbBridgeName = elbBridgeName;
+        this.elbIp = elbIp;
+        this.elbGwIp = elbGwIp;
+        this.elbGwMac = elbGwMac;
     }
 
     @Override
@@ -149,6 +163,10 @@ public class DefaultKubevirtNode implements KubevirtNode {
                 .state(newState)
                 .phyIntfs(phyIntfs)
                 .gatewayBridgeName(gatewayBridgeName)
+                .elbBridgeName(elbBridgeName)
+                .elbIp(elbIp)
+                .elbGwIp(elbGwIp)
+                .elbGwMac(elbGwMac)
                 .build();
     }
 
@@ -165,6 +183,10 @@ public class DefaultKubevirtNode implements KubevirtNode {
                 .state(state)
                 .phyIntfs(phyIntfs)
                 .gatewayBridgeName(gatewayBridgeName)
+                .elbBridgeName(elbBridgeName)
+                .elbIp(elbIp)
+                .elbGwIp(elbGwIp)
+                .elbGwMac(elbGwMac)
                 .build();
     }
 
@@ -181,6 +203,10 @@ public class DefaultKubevirtNode implements KubevirtNode {
                 .state(state)
                 .phyIntfs(phyIntfs)
                 .gatewayBridgeName(gatewayBridgeName)
+                .elbBridgeName(elbBridgeName)
+                .elbIp(elbIp)
+                .elbGwIp(elbGwIp)
+                .elbGwMac(elbGwMac)
                 .build();
     }
 
@@ -230,6 +256,26 @@ public class DefaultKubevirtNode implements KubevirtNode {
     @Override
     public String gatewayBridgeName() {
         return gatewayBridgeName;
+    }
+
+    @Override
+    public String elbBridgeName() {
+        return elbBridgeName;
+    }
+
+    @Override
+    public IpAddress elbIp() {
+        return elbIp;
+    }
+
+    @Override
+    public IpAddress elbGwIp() {
+        return elbGwIp;
+    }
+
+    @Override
+    public MacAddress elbGwMac() {
+        return elbGwMac;
     }
 
     private PortNumber tunnelPort(String tunnelType) {
@@ -296,7 +342,11 @@ public class DefaultKubevirtNode implements KubevirtNode {
                 .dataIp(node.dataIp())
                 .state(node.state())
                 .phyIntfs(node.phyIntfs())
-                .gatewayBridgeName(node.gatewayBridgeName());
+                .gatewayBridgeName(node.gatewayBridgeName())
+                .elbBridgeName(node.elbBridgeName())
+                .elbIp(node.elbIp())
+                .elbGwIp(node.elbGwIp())
+                .elbGwMac(node.elbGwMac());
     }
 
     @Override
@@ -336,6 +386,10 @@ public class DefaultKubevirtNode implements KubevirtNode {
                 .add("state", state)
                 .add("phyIntfs", phyIntfs)
                 .add("gatewayBridgeName", gatewayBridgeName)
+                .add("elbBridgeName", elbBridgeName)
+                .add("elbIp", elbIp)
+                .add("elbGwIp", elbGwIp)
+                .add("elbGwMac", elbGwMac)
                 .toString();
     }
 
@@ -351,6 +405,10 @@ public class DefaultKubevirtNode implements KubevirtNode {
         private KubevirtNodeState state;
         private Collection<KubevirtPhyInterface> phyIntfs;
         private String gatewayBridgeName;
+        private String elbBridgeName;
+        private IpAddress elbIp;
+        private IpAddress elbGwIp;
+        private MacAddress elbGwMac;
 
         // private constructor not intended to use from external
         private Builder() {
@@ -377,7 +435,11 @@ public class DefaultKubevirtNode implements KubevirtNode {
                     dataIp,
                     state,
                     phyIntfs,
-                    gatewayBridgeName
+                    gatewayBridgeName,
+                    elbBridgeName,
+                    elbIp,
+                    elbGwIp,
+                    elbGwMac
             );
         }
 
@@ -438,6 +500,30 @@ public class DefaultKubevirtNode implements KubevirtNode {
         @Override
         public Builder gatewayBridgeName(String gatewayBridgeName) {
             this.gatewayBridgeName = gatewayBridgeName;
+            return this;
+        }
+
+        @Override
+        public Builder elbBridgeName(String elbBridgeName) {
+            this.elbBridgeName = elbBridgeName;
+            return this;
+        }
+
+        @Override
+        public Builder elbIp(IpAddress elbIp) {
+            this.elbIp = elbIp;
+            return this;
+        }
+
+        @Override
+        public Builder elbGwIp(IpAddress elbGwIp) {
+            this.elbGwIp = elbGwIp;
+            return this;
+        }
+
+        @Override
+        public Builder elbGwMac(MacAddress elbGwMac) {
+            this.elbGwMac = elbGwMac;
             return this;
         }
     }
