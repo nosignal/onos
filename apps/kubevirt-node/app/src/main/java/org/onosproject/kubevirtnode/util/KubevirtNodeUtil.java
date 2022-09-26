@@ -30,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtNode;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtPhyInterface;
 import org.onosproject.kubevirtnode.api.KubevirtApiConfig;
@@ -84,6 +85,11 @@ public final class KubevirtNodeUtil {
     private static final String DATA_IP_KEY = SONA_PROJECT_DOMAIN + "/data-ip";
     private static final String GATEWAY_CONFIG_KEY = SONA_PROJECT_DOMAIN + "/gateway-config";
     private static final String GATEWAY_BRIDGE_NAME = "gatewayBridgeName";
+    private static final String ELB_CONFIG_KEY = SONA_PROJECT_DOMAIN + "/elb-config";
+    private static final String ELB_BRIDGE_NAME = "elbBridgeName";
+    private static final String ELB_IP_KEY = SONA_PROJECT_DOMAIN + "/elb-ip";
+    private static final String ELB_GW_IP_KEY = SONA_PROJECT_DOMAIN + "/elb-gw-ip";
+    private static final String ELB_GW_MAC_KEY = SONA_PROJECT_DOMAIN + "/elb-gw-mac";
     private static final String NETWORK_KEY = "network";
     private static final String INTERFACE_KEY = "interface";
     private static final String PHYS_BRIDGE_ID = "physBridgeId";
@@ -386,6 +392,16 @@ public final class KubevirtNodeUtil {
         String dataIpStr = annots.get(DATA_IP_KEY);
         Set<KubevirtPhyInterface> phys = new HashSet<>();
         String gatewayBridgeName = null;
+
+        String elbConfig = annots.get(ELB_CONFIG_KEY);
+        String elbIpStr = annots.get(ELB_IP_KEY);
+        String elbGwIpStr = annots.get(ELB_GW_IP_KEY);
+        String elbGwMacStr = annots.get(ELB_GW_MAC_KEY);
+        String elbBridgeName = null;
+        IpAddress elbIp = null;
+        IpAddress elbGwIp = null;
+        MacAddress elbGwMac = null;
+
         try {
             if (physnetConfig != null) {
                 JsonArray configJson = JsonArray.readFrom(physnetConfig);
@@ -423,6 +439,20 @@ public final class KubevirtNodeUtil {
 
                 nodeType = GATEWAY;
                 gatewayBridgeName = jsonNode.get(GATEWAY_BRIDGE_NAME).asText();
+
+                if (elbConfig != null && elbIpStr != null && elbGwIpStr != null) {
+                    JsonNode elbJsonNode = new ObjectMapper().readTree(elbConfig);
+
+                    elbBridgeName = elbJsonNode.get(ELB_BRIDGE_NAME).asText();
+                    elbIp = IpAddress.valueOf(elbIpStr);
+                    elbGwIp = IpAddress.valueOf(elbGwIpStr);
+                }
+
+                if (elbGwMacStr != null) {
+                    elbGwMac = MacAddress.valueOf(elbGwMacStr);
+                } else {
+                    //TODO: add the logic that retrieves the MAC address of the elb gw ip.
+                }
             }
         } catch (JsonProcessingException e) {
             log.error("Failed to parse physnet config or gateway config object", e);
@@ -453,6 +483,10 @@ public final class KubevirtNodeUtil {
                 .state(KubevirtNodeState.ON_BOARDED)
                 .phyIntfs(phys)
                 .gatewayBridgeName(gatewayBridgeName)
+                .elbBridgeName(elbBridgeName)
+                .elbIp(elbIp)
+                .elbGwIp(elbGwIp)
+                .elbGwMac(elbGwMac)
                 .build();
     }
 

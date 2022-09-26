@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
 import org.onosproject.codec.CodecContext;
 import org.onosproject.codec.JsonCodec;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtNode;
@@ -52,6 +53,10 @@ public final class KubevirtNodeCodec extends JsonCodec<KubevirtNode> {
     private static final String STATE = "state";
     private static final String PHYSICAL_INTERFACES = "phyIntfs";
     private static final String GATEWAY_BRIDGE_NAME = "gatewayBridgeName";
+    private static final String ELB_BRIDGE_NAME = "elbBridgeName";
+    private static final String ELB_IP = "elbIp";
+    private static final String ELB_GW_IP = "elbGwIp";
+    private static final String ELB_GW_MAC = "elbGwMac";
 
     private static final String MISSING_MESSAGE = " is required in OpenstackNode";
 
@@ -94,6 +99,23 @@ public final class KubevirtNodeCodec extends JsonCodec<KubevirtNode> {
         // serialize external bridge if exist
         if (node.gatewayBridgeName() != null) {
             result.put(GATEWAY_BRIDGE_NAME, node.gatewayBridgeName());
+        }
+
+        //serialize elb bridge and ip address if exist
+        if (node.elbBridgeName() != null) {
+            result.put(ELB_BRIDGE_NAME, node.elbBridgeName());
+        }
+
+        if (node.elbIp() != null) {
+            result.put(ELB_IP, node.elbIp().toString());
+        }
+
+        if (node.elbGwIp() != null) {
+            result.put(ELB_GW_IP, node.elbGwIp().toString());
+        }
+
+        if (node.elbGwMac() != null) {
+            result.put(ELB_GW_MAC, node.elbGwMac().toString());
         }
 
         return result;
@@ -151,7 +173,27 @@ public final class KubevirtNodeCodec extends JsonCodec<KubevirtNode> {
             nodeBuilder.gatewayBridgeName(externalBridgeJson.asText());
         }
 
-        log.trace("node is {}", nodeBuilder.build().toString());
+        JsonNode elbBridgeJson = json.get(ELB_BRIDGE_NAME);
+        if (elbBridgeJson != null) {
+            nodeBuilder.elbBridgeName(elbBridgeJson.asText());
+        }
+
+        JsonNode elbIpJson = json.get(ELB_IP);
+        if (elbIpJson != null) {
+            nodeBuilder.elbIp(IpAddress.valueOf(elbIpJson.asText()));
+        }
+
+        JsonNode elbGwIpJson = json.get(ELB_GW_IP);
+        if (elbIpJson != null) {
+            nodeBuilder.elbGwIp(IpAddress.valueOf(elbGwIpJson.asText()));
+        }
+
+        JsonNode elbGwMacJson = json.get(ELB_GW_MAC);
+        if (elbIpJson != null) {
+            nodeBuilder.elbGwMac(MacAddress.valueOf(elbGwMacJson.asText()));
+        }
+
+        log.trace("node is {}", nodeBuilder.build());
 
         return nodeBuilder.build();
     }

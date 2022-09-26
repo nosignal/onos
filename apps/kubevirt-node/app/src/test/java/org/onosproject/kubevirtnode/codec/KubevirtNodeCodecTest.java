@@ -23,6 +23,7 @@ import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
 import org.onosproject.codec.CodecContext;
 import org.onosproject.codec.JsonCodec;
 import org.onosproject.codec.impl.CodecManager;
@@ -105,6 +106,8 @@ public class KubevirtNodeCodecTest {
                 .tunBridge(DeviceId.deviceId("br-tun"))
                 .dataIp(IpAddress.valueOf("20.20.20.2"))
                 .phyIntfs(ImmutableList.of(phyIntf1, phyIntf2))
+                .elbBridgeName("elbnet")
+                .elbIp(IpAddress.valueOf("10.10.10.1"))
                 .build();
 
         ObjectNode nodeJson = kubevirtNodeCodec.encode(node, context);
@@ -163,10 +166,15 @@ public class KubevirtNodeCodecTest {
                 .tunBridge(DeviceId.deviceId("br-tun"))
                 .dataIp(IpAddress.valueOf("20.20.20.2"))
                 .gatewayBridgeName("gateway")
+                .elbBridgeName("elbnet")
+                .elbIp(IpAddress.valueOf("192.168.0.2"))
+                .elbGwIp(IpAddress.valueOf("192.168.0.1"))
+                .elbGwMac(MacAddress.valueOf("AA:BB:CC:DD:EE:FF"))
                 .build();
 
         ObjectNode nodeJson = kubevirtNodeCodec.encode(node, context);
         assertThat(nodeJson, matchesKubevirtNode(node));
+
     }
 
     /**
@@ -185,6 +193,10 @@ public class KubevirtNodeCodecTest {
         assertThat(node.intgBridge().toString(), is("of:00000000000000a1"));
         assertThat(node.tunBridge().toString(), is("of:00000000000000a2"));
         assertThat(node.gatewayBridgeName(), is("gateway"));
+        assertThat(node.elbBridgeName(), is("elbnet"));
+        assertThat(node.elbIp().toString(), is("192.168.0.2"));
+        assertThat(node.elbGwIp().toString(), is("192.168.0.1"));
+        assertThat(node.elbGwMac().toString(), is("AA:BB:CC:DD:EE:FF"));
     }
 
     /**

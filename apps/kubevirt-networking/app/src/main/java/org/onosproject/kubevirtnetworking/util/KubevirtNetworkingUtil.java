@@ -41,6 +41,7 @@ import org.onlab.packet.MacAddress;
 import org.onosproject.cfg.ConfigProperty;
 import org.onosproject.kubevirtnetworking.api.DefaultKubevirtNetwork;
 import org.onosproject.kubevirtnetworking.api.DefaultKubevirtPort;
+import org.onosproject.kubevirtnetworking.api.KubernetesExternalLb;
 import org.onosproject.kubevirtnetworking.api.KubevirtHostRoute;
 import org.onosproject.kubevirtnetworking.api.KubevirtIpPool;
 import org.onosproject.kubevirtnetworking.api.KubevirtLoadBalancer;
@@ -539,6 +540,28 @@ public final class KubevirtNetworkingUtil {
             return null;
         }
         return (KubevirtNode) nodeService.completeNodes(GATEWAY).toArray()[router.hashCode() % numOfGateways];
+    }
+
+    /**
+     * Returns the gateway node for the specified kubernetes external lb.
+     * Among gateways, only one gateway would act as a gateway per external lb.
+     * Currently gateway node is selected based on modulo operation with router hashcode.
+     *
+     * @param nodeService kubevirt node service
+     * @param externalLb kubernetes external lb
+     * @return elected gateway node
+     */
+    public static KubevirtNode gatewayNodeForSpecifiedService(KubevirtNodeService nodeService,
+                                                              KubernetesExternalLb externalLb) {
+        //TODO: enhance election logic for a better load balancing
+
+        int numOfGateways = nodeService.completeNodes(GATEWAY).size();
+        if (numOfGateways == 0) {
+            return null;
+        }
+
+        return (KubevirtNode) nodeService.completeNodes(GATEWAY)
+                .toArray()[externalLb.hashCode() % numOfGateways];
     }
 
     /**

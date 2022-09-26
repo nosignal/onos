@@ -67,6 +67,7 @@ public class KubevirtShowNodeCommand extends AbstractShellCommand {
     }
 
     private void printNode(KubevirtNode node) {
+        print("node: %s", node.toString());
         print("Name: %s", node.hostname());
         print("  Type: %s", node.type());
         print("  State: %s", node.state());
@@ -81,6 +82,17 @@ public class KubevirtShowNodeCommand extends AbstractShellCommand {
             print("    Network: %s", intf.network());
             print("    Interface: %s", intf.intf());
             counter++;
+        }
+
+        if (node.gatewayBridgeName() != null) {
+            print("  GatewayBridgeName: %s", node.gatewayBridgeName());
+        }
+
+        if (node.elbBridgeName() != null && node.elbIp() != null) {
+            print("  ElbBridgeName: %s", node.elbBridgeName());
+            print("  ElbIp: %s", node.elbIp().toString());
+            print("  ElbGwIp: %s", node.elbGwIp().toString());
+            print("  ElbGwMac: %s", node.elbGwMac().toString());
         }
     }
 
