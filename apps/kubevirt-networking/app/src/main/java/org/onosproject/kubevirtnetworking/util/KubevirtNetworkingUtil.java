@@ -53,6 +53,7 @@ import org.onosproject.kubevirtnetworking.api.KubevirtRouter;
 import org.onosproject.kubevirtnetworking.api.KubevirtRouterService;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtNode;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtPhyInterface;
+import org.onosproject.kubevirtnode.api.KubernetesExternalLbInterface;
 import org.onosproject.kubevirtnode.api.KubevirtApiConfig;
 import org.onosproject.kubevirtnode.api.KubevirtApiConfigService;
 import org.onosproject.kubevirtnode.api.KubevirtNode;
@@ -89,6 +90,7 @@ import static org.onosproject.kubevirtnode.api.KubevirtNode.Type.GATEWAY;
 import static org.onosproject.kubevirtnode.api.KubevirtNode.Type.MASTER;
 import static org.onosproject.kubevirtnode.api.KubevirtNode.Type.OTHER;
 import static org.onosproject.kubevirtnode.api.KubevirtNode.Type.WORKER;
+import static org.onosproject.net.AnnotationKeys.PORT_MAC;
 import static org.onosproject.net.AnnotationKeys.PORT_NAME;
 
 /**
@@ -545,7 +547,7 @@ public final class KubevirtNetworkingUtil {
     /**
      * Returns the gateway node for the specified kubernetes external lb.
      * Among gateways, only one gateway would act as a gateway per external lb.
-     * Currently gateway node is selected based on modulo operation with router hashcode.
+     * Currently gateway node is selected based on modulo operation with external lb hashcode.
      *
      * @param nodeService kubevirt node service
      * @param externalLb kubernetes external lb
@@ -562,6 +564,28 @@ public final class KubevirtNetworkingUtil {
 
         return (KubevirtNode) nodeService.completeNodes(GATEWAY)
                 .toArray()[externalLb.hashCode() % numOfGateways];
+    }
+
+    /**
+     * Returns the worker node for the specified kubernetes external lb.
+     * Among worker nodes, only one worker would serve the traffic from and to the gateway.
+     * Currently worker node is selected based on modulo operation with external lb hashcode.
+     *
+     * @param nodeService kubevirt node service
+     * @param externalLb kubernetes external lb
+     * @return elected worker node
+     */
+    public static KubevirtNode workerNodeForSpecifiedService(KubevirtNodeService nodeService,
+                                                             KubernetesExternalLb externalLb) {
+        //TODO: enhance election logic for a better load balancing
+
+        int numOfWorkers = nodeService.completeNodes(WORKER).size();
+        if (numOfWorkers == 0) {
+            return null;
+        }
+
+        return (KubevirtNode) nodeService.completeNodes(WORKER)
+                .toArray()[externalLb.hashCode() % numOfWorkers];
     }
 
     /**
@@ -656,6 +680,73 @@ public final class KubevirtNetworkingUtil {
                 .findAny().orElse(null);
 
         return port != null ? port.number() : null;
+    }
+
+    /**
+     * Returns the external lb patch port number with specified gateway.
+     *
+     * @param deviceService device service
+     * @param gateway gateway node
+     * @return external lb bridge patch port number
+     */
+    public static PortNumber elbPatchPortNum(DeviceService deviceService, KubevirtNode gateway) {
+        KubernetesExternalLbInterface kubernetesExternalLbInterface =
+                gateway.kubernetesExternalLbInterface();
+
+        if (kubernetesExternalLbInterface == null) {
+            log.warn("No elb interface is attached to gateway {}", gateway.hostname());
+            return null;
+        }
+
+        String elbBridgeName = kubernetesExternalLbInterface.externalLbBridgeName();
+
+        String patchPortName = "int-to-" + elbBridgeName;
+
+        Port port = deviceService.getPorts(gateway.intgBridge()).stream()
+                .filter(p -> p.isEnabled() &&
+                        Objects.equals(p.annotations().value(PORT_NAME), patchPortName))
+                .findAny().orElse(null);
+
+        return port != null ? port.number() : null;
+    }
+
+    /**
+     * Returns the external lb patch port Mac with specified gateway.
+     *
+     * @param deviceService device service
+     * @param gateway gateway node
+     * @return external lb bridge patch Mac Address
+     */
+    public static MacAddress kubernetesElbMac(DeviceService deviceService, KubevirtNode gateway) {
+
+        KubernetesExternalLbInterface kubernetesExternalLbInterface =
+                gateway.kubernetesExternalLbInterface();
+
+        if (kubernetesExternalLbInterface == null) {
+            log.warn("No elb interface is attached to gateway {}", gateway.hostname());
+            return null;
+        }
+
+        String elbBridgeName = kubernetesExternalLbInterface.externalLbBridgeName();
+
+        String patchPortName = "int-to-" + elbBridgeName;
+
+        Port port = deviceService.getPorts(gateway.intgBridge()).stream()
+                .filter(p -> p.isEnabled() &&
+                        Objects.equals(p.annotations().value(PORT_NAME), patchPortName))
+                .findAny().orElse(null);
+
+        if (port == null) {
+            return null;
+        }
+
+        String portMacStr = port.annotations().value(PORT_MAC);
+
+        if (portMacStr == null) {
+            return null;
+        }
+
+        return MacAddress.valueOf(portMacStr);
     }
 
     /**

@@ -15,6 +15,9 @@
  */
 package org.onosproject.kubevirtnetworking.api;
 
+import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
+
 import java.util.Set;
 
 /**
@@ -33,7 +36,7 @@ public interface KubernetesExternalLb {
      *
      * @return load balancer IP
      */
-    String loadBalancerIp();
+    IpAddress loadBalancerIp();
 
     /**
      * Returns the set of node port.
@@ -64,12 +67,44 @@ public interface KubernetesExternalLb {
     String electedGateway();
 
     /**
+     * Returns the elected worker node for this service.
+     *
+     * @return worker node hostname
+     */
+    String electedWorker();
+
+    /**
      * Updates the elected gateway node host name.
      *
      * @param electedGateway updated elected gateway node hostname
      * @return kubernetes external lb with the updated gateway node hostname
      */
     KubernetesExternalLb updateElectedGateway(String electedGateway);
+
+    /**
+     * Updates the elected worker node host name.
+     *
+     * @param electedWorker updated elected worker node hostname
+     * @return  kubernetes external lb with the updated worker node hostname
+     */
+    KubernetesExternalLb updateElectedWorker(String electedWorker);
+
+    /**
+     * Returns the gateway IP of load balancer.
+     * TEG would send outbound traffic to this gateway.
+     *
+     * @return load balancer gateway IP
+     */
+    IpAddress loadBalancerGwIp();
+
+    /**
+     * Returns the gateway MAC of load balancer.
+     * TEG would send outbound traffic to this gateway.
+     *
+     * @return load balancer gateway IP
+     */
+    MacAddress loadBalancerGwMac();
+
 
     interface Builder {
         /**
@@ -93,7 +128,7 @@ public interface KubernetesExternalLb {
          * @param loadBalancerIp external load balancer Ip
          * @return external load balancer builder
          */
-        Builder loadBalancerIp(String loadBalancerIp);
+        Builder loadBalancerIp(IpAddress loadBalancerIp);
 
         /**
          * Returns kubernetes external load balancer builder with supplied node port set.
@@ -123,8 +158,33 @@ public interface KubernetesExternalLb {
          * Returns kubernetes external load balancer builder with supplied elected gateway.
          *
          * @param gateway gateway node hostname
-         * @return gateway node hostname
+         * @return external load balancer builder
          */
         Builder electedGateway(String gateway);
+
+        /**
+         * Returns kubernetes external load balancer builder with supplied elected worker.
+         *
+         * @param worker worker node hostname
+         * @return external load balancer builder
+         */
+        Builder electedWorker(String worker);
+
+
+        /**
+         * Returns kubernetes external load balancer builder with supplied load balancer gateway Ip.
+         *
+         * @param loadBalancerGwIp gateway IP of the external load balancer
+         * @return external load balancer builder
+         */
+        Builder loadBalancerGwIp(IpAddress loadBalancerGwIp);
+
+        /**
+         * Returns kubernetes external load balancer builder with supplied load balancer gateway Mac.
+         *
+         * @param loadBalancerGwMac gateway Mac of the external load balancer
+         * @return external load balancer builder
+         */
+        Builder loadBalancerGwMac(MacAddress loadBalancerGwMac);
     }
 }

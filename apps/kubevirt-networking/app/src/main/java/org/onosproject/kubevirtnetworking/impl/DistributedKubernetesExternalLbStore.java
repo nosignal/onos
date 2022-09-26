@@ -16,6 +16,7 @@
 package org.onosproject.kubevirtnetworking.impl;
 
 import com.google.common.collect.ImmutableSet;
+import org.onlab.packet.IpAddress;
 import org.onlab.util.KryoNamespace;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
@@ -47,12 +48,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.onlab.util.Tools.groupedThreads;
 import static org.onosproject.kubevirtnetworking.api.KubernetesExternalLbEvent.Type.KUBERNETES_EXTERNAL_LOAD_BALANCER_CREATED;
+import static org.onosproject.kubevirtnetworking.api.KubernetesExternalLbEvent.Type.KUBERNETES_EXTERNAL_LOAD_BALANCER_GATEWAY_CHANGED;
 import static org.onosproject.kubevirtnetworking.api.KubernetesExternalLbEvent.Type.KUBERNETES_EXTERNAL_LOAD_BALANCER_REMOVED;
 import static org.onosproject.kubevirtnetworking.api.KubernetesExternalLbEvent.Type.KUBERNETES_EXTERNAL_LOAD_BALANCER_UPDATED;
+import static org.onosproject.kubevirtnetworking.api.KubernetesExternalLbEvent.Type.KUBERNETES_EXTERNAL_LOAD_BALANCER_WORKER_CHANGED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * Implementation of kubernetes external lb store using consistent map.
+ * Implementation of kubernetes external load balancer store using consistent map.
  */
 @Component(immediate = true, service = KubernetesExternalLbStore.class)
 public class DistributedKubernetesExternalLbStore
@@ -69,6 +72,7 @@ public class DistributedKubernetesExternalLbStore
             .register(KryoNamespaces.API)
             .register(KubernetesExternalLb.class)
             .register(DefaultKubernetesExternalLb.class)
+            .register(IpAddress.class)
             .register(Collection.class)
             .build();
 
@@ -161,19 +165,44 @@ public class DistributedKubernetesExternalLbStore
                                     KUBERNETES_EXTERNAL_LOAD_BALANCER_CREATED, event.newValue().value())));
                     break;
                 case UPDATE:
-                    eventExecutor.execute(() ->
-                            notifyDelegate(new KubernetesExternalLbEvent(
-                                    KUBERNETES_EXTERNAL_LOAD_BALANCER_UPDATED, event.newValue().value())));
+                    eventExecutor.execute(() -> processMapUpdate(event));
                     break;
                 case REMOVE:
                     eventExecutor.execute(() ->
                             notifyDelegate(new KubernetesExternalLbEvent(
-                                    KUBERNETES_EXTERNAL_LOAD_BALANCER_REMOVED, event.newValue().value())));
+                                    KUBERNETES_EXTERNAL_LOAD_BALANCER_REMOVED, event.oldValue().value())));
                     break;
                 default:
                     //do nothing
                     break;
             }
+        }
+
+        private void processMapUpdate(MapEvent<String, KubernetesExternalLb> event) {
+            log.debug("Kubernetes External LB updated");
+
+            KubernetesExternalLb oldValue = event.oldValue().value();
+            KubernetesExternalLb newValue = event.newValue().value();
+
+            if (oldValue.electedGateway() != null && newValue.electedGateway() != null &&
+                    !oldValue.electedGateway().equals(newValue.electedGateway())) {
+                notifyDelegate(new KubernetesExternalLbEvent(
+                        KUBERNETES_EXTERNAL_LOAD_BALANCER_GATEWAY_CHANGED,
+                        newValue, oldValue.electedGateway(), oldValue.electedWorker())
+                );
+            }
+
+            if (oldValue.electedWorker() != null && newValue.electedWorker() != null &&
+                    !oldValue.electedWorker().equals(newValue.electedWorker())) {
+                notifyDelegate(new KubernetesExternalLbEvent(
+                        KUBERNETES_EXTERNAL_LOAD_BALANCER_WORKER_CHANGED,
+                        newValue, oldValue.electedWorker())
+                );
+            }
+
+            notifyDelegate(new KubernetesExternalLbEvent(
+                    KUBERNETES_EXTERNAL_LOAD_BALANCER_UPDATED, event.newValue().value()));
+
         }
     }
 }

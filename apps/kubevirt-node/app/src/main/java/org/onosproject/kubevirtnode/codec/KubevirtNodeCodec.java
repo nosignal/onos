@@ -19,10 +19,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.onlab.packet.IpAddress;
-import org.onlab.packet.MacAddress;
 import org.onosproject.codec.CodecContext;
 import org.onosproject.codec.JsonCodec;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtNode;
+import org.onosproject.kubevirtnode.api.KubernetesExternalLbInterface;
 import org.onosproject.kubevirtnode.api.KubevirtNode;
 import org.onosproject.kubevirtnode.api.KubevirtNodeState;
 import org.onosproject.kubevirtnode.api.KubevirtPhyInterface;
@@ -53,12 +53,9 @@ public final class KubevirtNodeCodec extends JsonCodec<KubevirtNode> {
     private static final String STATE = "state";
     private static final String PHYSICAL_INTERFACES = "phyIntfs";
     private static final String GATEWAY_BRIDGE_NAME = "gatewayBridgeName";
-    private static final String ELB_BRIDGE_NAME = "elbBridgeName";
-    private static final String ELB_IP = "elbIp";
-    private static final String ELB_GW_IP = "elbGwIp";
-    private static final String ELB_GW_MAC = "elbGwMac";
+    private static final String KUBERNETES_EXTERNAL_LB_INTERFACE = "kubernetesExternalLbInterface";
 
-    private static final String MISSING_MESSAGE = " is required in OpenstackNode";
+    private static final String MISSING_MESSAGE = " is required in KubevirtNode";
 
     @Override
     public ObjectNode encode(KubevirtNode node, CodecContext context) {
@@ -101,21 +98,11 @@ public final class KubevirtNodeCodec extends JsonCodec<KubevirtNode> {
             result.put(GATEWAY_BRIDGE_NAME, node.gatewayBridgeName());
         }
 
-        //serialize elb bridge and ip address if exist
-        if (node.elbBridgeName() != null) {
-            result.put(ELB_BRIDGE_NAME, node.elbBridgeName());
-        }
-
-        if (node.elbIp() != null) {
-            result.put(ELB_IP, node.elbIp().toString());
-        }
-
-        if (node.elbGwIp() != null) {
-            result.put(ELB_GW_IP, node.elbGwIp().toString());
-        }
-
-        if (node.elbGwMac() != null) {
-            result.put(ELB_GW_MAC, node.elbGwMac().toString());
+        // serialize kubernetex external load balancer interface if exist
+        if (node.kubernetesExternalLbInterface() != null) {
+            ObjectNode elbIntfJson = context.codec(KubernetesExternalLbInterface.class)
+                    .encode(node.kubernetesExternalLbInterface(), context);
+            result.put(KUBERNETES_EXTERNAL_LB_INTERFACE, elbIntfJson.toString());
         }
 
         return result;
@@ -173,24 +160,16 @@ public final class KubevirtNodeCodec extends JsonCodec<KubevirtNode> {
             nodeBuilder.gatewayBridgeName(externalBridgeJson.asText());
         }
 
-        JsonNode elbBridgeJson = json.get(ELB_BRIDGE_NAME);
-        if (elbBridgeJson != null) {
-            nodeBuilder.elbBridgeName(elbBridgeJson.asText());
-        }
+        JsonNode elbIntfJson = json.get(KUBERNETES_EXTERNAL_LB_INTERFACE);
 
-        JsonNode elbIpJson = json.get(ELB_IP);
-        if (elbIpJson != null) {
-            nodeBuilder.elbIp(IpAddress.valueOf(elbIpJson.asText()));
-        }
+        if (elbIntfJson != null) {
+            final JsonCodec<KubernetesExternalLbInterface>
+                    kubernetesExternalLbInterfaceCodecJsonCodec = context.codec(KubernetesExternalLbInterface.class);
+            ObjectNode elbIntfObjNode = elbIntfJson.deepCopy();
 
-        JsonNode elbGwIpJson = json.get(ELB_GW_IP);
-        if (elbIpJson != null) {
-            nodeBuilder.elbGwIp(IpAddress.valueOf(elbGwIpJson.asText()));
-        }
+            nodeBuilder.kubernetesExternalLbInterface(
+                    kubernetesExternalLbInterfaceCodecJsonCodec.decode(elbIntfObjNode, context));
 
-        JsonNode elbGwMacJson = json.get(ELB_GW_MAC);
-        if (elbIpJson != null) {
-            nodeBuilder.elbGwMac(MacAddress.valueOf(elbGwMacJson.asText()));
         }
 
         log.trace("node is {}", nodeBuilder.build());

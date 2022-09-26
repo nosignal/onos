@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-present Open Networking Foundation
+ * Copyright 2022-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.google.common.collect.Sets;
 import com.google.common.testing.EqualsTester;
 import org.junit.Before;
 import org.junit.Test;
+import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
 
 import java.util.Set;
 
@@ -31,8 +33,8 @@ import static org.onlab.junit.ImmutableClassChecker.assertThatClassIsImmutable;
 public class DefaultKubernetesExternalLbTest {
     private static final String SERVICE_NAME_1 = "service_name_1";
     private static final String SERVICE_NAME_2 = "service_name_2";
-    private static final String LOADBALANCER_IP_1 = "1.1.1.1";
-    private static final String LOADBALANCER_IP_2 = "2.2.2.2";
+    private static final IpAddress LOADBALANCER_IP_1 = IpAddress.valueOf("1.1.1.2");
+    private static final IpAddress LOADBALANCER_IP_2 = IpAddress.valueOf("2.2.2.2");
     private static final Set<Integer> NODE_PORT_SET_1 = Sets.newHashSet(Integer.valueOf(32080));
     private static final Set<Integer> NODE_PORT_SET_2 = Sets.newHashSet(Integer.valueOf(33080));
     private static final Set<Integer> PORT_SET_1 = Sets.newHashSet(Integer.valueOf(8080));
@@ -41,6 +43,13 @@ public class DefaultKubernetesExternalLbTest {
     private static final Set<String> ENDPOINT_SET_2 = Sets.newHashSet(String.valueOf("1.1.2.2"));
     private static final String ELECTED_GATEWAY_1 = "gateway1";
     private static final String ELECTED_GATEWAY_2 = "gateway2";
+    private static final String ELECTED_WORKER_1 = "worker1";
+    private static final String ELECTED_WORKER_2 = "worker2";
+
+    private static final IpAddress LOADBALANCER_GW_IP_1 = IpAddress.valueOf("1.1.1.1");
+    private static final IpAddress LOADBALANCER_GW_IP_2 = IpAddress.valueOf("2.2.2.1");
+    private static final MacAddress LOADBALANCER_GW_MAC_1 = MacAddress.valueOf("aa:bb:cc:dd:ee:ff");
+    private static final MacAddress LOADBALANCER_GW_MAC_2 = MacAddress.valueOf("ff:ee:dd:cc:bb:aa");
 
     private KubernetesExternalLb lb1;
     private KubernetesExternalLb sameAsLb1;
@@ -66,6 +75,9 @@ public class DefaultKubernetesExternalLbTest {
                 .portSet(PORT_SET_1)
                 .endpointSet(ENDPOINT_SET_1)
                 .electedGateway(ELECTED_GATEWAY_1)
+                .electedWorker(ELECTED_WORKER_1)
+                .loadBalancerGwIp(LOADBALANCER_GW_IP_1)
+                .loadBalancerGwMac(LOADBALANCER_GW_MAC_1)
                 .build();
 
         sameAsLb1 = DefaultKubernetesExternalLb.builder()
@@ -75,6 +87,9 @@ public class DefaultKubernetesExternalLbTest {
                 .portSet(PORT_SET_1)
                 .endpointSet(ENDPOINT_SET_1)
                 .electedGateway(ELECTED_GATEWAY_1)
+                .electedWorker(ELECTED_WORKER_1)
+                .loadBalancerGwIp(LOADBALANCER_GW_IP_1)
+                .loadBalancerGwMac(LOADBALANCER_GW_MAC_1)
                 .build();
 
         lb2 = DefaultKubernetesExternalLb.builder()
@@ -84,6 +99,9 @@ public class DefaultKubernetesExternalLbTest {
                 .portSet(PORT_SET_2)
                 .endpointSet(ENDPOINT_SET_2)
                 .electedGateway(ELECTED_GATEWAY_2)
+                .electedWorker(ELECTED_WORKER_2)
+                .loadBalancerGwIp(LOADBALANCER_GW_IP_2)
+                .loadBalancerGwMac(LOADBALANCER_GW_MAC_2)
                 .build();
     }
 
@@ -104,10 +122,10 @@ public class DefaultKubernetesExternalLbTest {
     public void testConstruction() {
         KubernetesExternalLb lb = lb1;
 
-        assertEquals(SERVICE_NAME_1, lb1.serviceName());
-        assertEquals(LOADBALANCER_IP_1, lb1.loadBalancerIp());
-        assertEquals(NODE_PORT_SET_1, lb1.nodePortSet());
-        assertEquals(PORT_SET_1, lb1.portSet());
-        assertEquals(ENDPOINT_SET_1, lb1.endpointSet());
+        assertEquals(SERVICE_NAME_1, lb.serviceName());
+        assertEquals(LOADBALANCER_IP_1, lb.loadBalancerIp());
+        assertEquals(NODE_PORT_SET_1, lb.nodePortSet());
+        assertEquals(PORT_SET_1, lb.portSet());
+        assertEquals(ENDPOINT_SET_1, lb.endpointSet());
     }
 }

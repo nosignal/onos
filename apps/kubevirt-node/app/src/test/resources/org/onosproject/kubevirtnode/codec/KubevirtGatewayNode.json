@@ -6,8 +6,10 @@
   "integrationBridge": "of:00000000000000a1",
   "tunnelBridge": "of:00000000000000a2",
   "gatewayBridgeName": "gateway",
-  "elbBridgeName": "elbnet",
-  "elbIp": "192.168.0.2",
-  "elbGwIp": "192.168.0.1",
-  "elbGwMac": "aa:bb:cc:dd:ee:ff"
+  "kubernetesExternalLbInterface": {
+    "externalLbBridgeName": "elbnet",
+    "externalLbIp": "10.10.10.2",
+    "externalLbGwIp": "10.10.10.1",
+    "externalLbGwMac": "aa:bb:cc:dd:ee:ff"
+  }
 }

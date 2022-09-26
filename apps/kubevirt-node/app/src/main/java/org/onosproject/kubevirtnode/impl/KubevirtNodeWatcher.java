@@ -186,7 +186,7 @@ public class KubevirtNodeWatcher {
             }
 
             KubevirtNode kubevirtNode = buildKubevirtNode(node);
-            log.info("buildKubevirtNode: {}", kubevirtNode.toString());
+            log.info("buildKubevirtNode: {}", kubevirtNode);
             if (kubevirtNode.type() == WORKER || kubevirtNode.type() == GATEWAY) {
                 if (!kubevirtNodeAdminService.hasNode(kubevirtNode.hostname())) {
                     kubevirtNodeAdminService.createNode(kubevirtNode);

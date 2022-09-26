@@ -23,8 +23,26 @@ import org.onosproject.event.AbstractEvent;
 public class KubernetesExternalLbEvent
     extends AbstractEvent<KubernetesExternalLbEvent.Type, KubernetesExternalLb> {
 
+    private final String oldGateway;
+    private final String oldWorker;
+
+
     public KubernetesExternalLbEvent(Type type, KubernetesExternalLb subject) {
         super(type, subject);
+        this.oldGateway = null;
+        this.oldWorker = null;
+    }
+
+    public KubernetesExternalLbEvent(Type type, KubernetesExternalLb subject, String oldGateway, String oldWorker) {
+        super(type, subject);
+        this.oldGateway = oldGateway;
+        this.oldWorker = oldWorker;
+    }
+
+    public KubernetesExternalLbEvent(Type type, KubernetesExternalLb subject, String oldWorker) {
+        super(type, subject);
+        this.oldGateway = null;
+        this.oldWorker = oldWorker;
     }
 
     /**
@@ -32,18 +50,46 @@ public class KubernetesExternalLbEvent
      */
     public enum Type {
         /**
-         * Signifies that a new kubevirt load balancer is created.
+         * Signifies that a new kubernetex external load balancer is created.
          */
         KUBERNETES_EXTERNAL_LOAD_BALANCER_CREATED,
 
         /**
-         * Signifies that a kubevirt load balancer is removed.
+         * Signifies that a kubernetex external load balancer is removed.
          */
         KUBERNETES_EXTERNAL_LOAD_BALANCER_REMOVED,
 
         /**
-         * Signifies that a kubevirt load balancer is updated.
+         * Signifies that a kubernetex external load balancer is updated.
          */
         KUBERNETES_EXTERNAL_LOAD_BALANCER_UPDATED,
+
+        /**
+         * Signifies that a kubernetes external load balancer gateway node is updated.
+         */
+        KUBERNETES_EXTERNAL_LOAD_BALANCER_GATEWAY_CHANGED,
+
+        /**
+         * Signifies that a kubernetes external load balancer worker node is updated.
+         */
+        KUBERNETES_EXTERNAL_LOAD_BALANCER_WORKER_CHANGED,
+    }
+
+    /**
+     * Returns the old gateway of the router event.
+     *
+     * @return gateway node hostname
+     */
+    public String oldGateway() {
+        return oldGateway;
+    }
+
+    /**
+     * Returns the old worker of the router event.
+     *
+     * @return worker node hostname
+     */
+    public String oldWorker() {
+        return oldWorker;
     }
 }

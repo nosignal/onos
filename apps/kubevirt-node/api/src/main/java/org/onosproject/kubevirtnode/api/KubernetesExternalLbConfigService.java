@@ -13,27 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onosproject.kubevirtnetworking.api;
+package org.onosproject.kubevirtnode.api;
 
 import org.onosproject.event.ListenerService;
 
 import java.util.Set;
 
-public interface KubernetesExternalLbService
-    extends ListenerService<KubernetesExternalLbEvent, KubernetesExternalLbListener> {
+/**
+ * Service for administering the inventory of kubernetes external lb configs.
+ */
+public interface KubernetesExternalLbConfigService
+        extends ListenerService<KubernetesExternalLbConfigEvent, KubernetesExternalLbConfigListener> {
+    String APP_ID = "org.onosproject.kubevirtnode";
 
     /**
-     * Returns the kubernetes external load balancer with the supplied service name.
+     * Returns the kubernetes external lb config with the given config name.
      *
-     * @param serviceName service name
-     * @return kubernetes external load balancer
+     * @param configName config name
+     * @return kubernetes external lb config
      */
-    KubernetesExternalLb loadBalancer(String serviceName);
+    KubernetesExternalLbConfig lbConfig(String configName);
 
     /**
-     * Returns all kubernetes external load balancers registered in the service.
+     * Returns all kubernetes external lb configs.
      *
-     * @return set of kubernetes external load balancers
+     * @return set of kubernetes external lb configs
      */
-    Set<KubernetesExternalLb> loadBalancers();
+    Set<KubernetesExternalLbConfig> lbConfigs();
 }
