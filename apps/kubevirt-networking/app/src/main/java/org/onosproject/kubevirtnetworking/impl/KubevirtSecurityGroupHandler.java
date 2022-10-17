@@ -51,8 +51,11 @@ import org.onosproject.kubevirtnode.api.KubevirtNodeEvent;
 import org.onosproject.kubevirtnode.api.KubevirtNodeListener;
 import org.onosproject.kubevirtnode.api.KubevirtNodeService;
 import org.onosproject.mastership.MastershipService;
+import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.PortNumber;
+import org.onosproject.net.device.DeviceEvent;
+import org.onosproject.net.device.DeviceListener;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.driver.DriverService;
 import org.onosproject.net.flow.DefaultTrafficSelector;
@@ -196,6 +199,9 @@ public class KubevirtSecurityGroupHandler {
     @Reference(cardinality = ReferenceCardinality.MANDATORY)
     protected KubevirtSecurityGroupService securityGroupService;
 
+    private final DeviceListener deviceListener =
+            new InternalDeviceListener();
+
     private final KubevirtPortListener portListener =
             new InternalKubevirtPortListener();
     private final KubevirtSecurityGroupListener securityGroupListener =
@@ -215,6 +221,7 @@ public class KubevirtSecurityGroupHandler {
     protected void activate() {
         appId = coreService.registerApplication(KUBEVIRT_NETWORKING_APP_ID);
         localNodeId = clusterService.getLocalNode().id();
+        deviceService.addListener(deviceListener);
         securityGroupService.addListener(securityGroupListener);
         portService.addListener(portListener);
         networkService.addListener(networkListener);
@@ -231,6 +238,7 @@ public class KubevirtSecurityGroupHandler {
         configService.unregisterProperties(getClass(), false);
         nodeService.removeListener(nodeListener);
         networkService.removeListener(networkListener);
+        deviceService.removeListener(deviceListener);
         eventExecutor.shutdown();
 
         log.info("Stopped");
@@ -1110,32 +1118,79 @@ public class KubevirtSecurityGroupHandler {
 
             resetSecurityGroupRulesByNode(node);
         }
+    }
 
-        private void resetSecurityGroupRulesByNode(KubevirtNode node) {
-            if (getUseSecurityGroupFlag()) {
-                initializeProviderPipeline(node, true);
+    /**
+     * An internal OVS listener. This listener is used for listening the network
+     * facing events from OVS device. If a new OVS device is detected, discovered,
+     * ONOS tries to install device related rules into the target kubernetes node.
+     */
+    private class InternalDeviceListener implements DeviceListener {
 
-                for (KubevirtNetwork network : networkService.tenantNetworks()) {
-                    initializeTenantPipeline(network, node, true);
-                }
+        @Override
+        public boolean isRelevant(DeviceEvent event) {
+            return event.subject().type() == Device.Type.SWITCH;
+        }
 
-                securityGroupService.securityGroups().forEach(securityGroup ->
-                        securityGroup.rules().forEach(
-                                KubevirtSecurityGroupHandler.this::securityGroupRuleAdded));
-            } else {
-                initializeProviderPipeline(node, false);
+        private boolean isRelevantHelper() {
+            return Objects.equals(localNodeId, leadershipService.getLeader(appId.name()));
+        }
 
-                for (KubevirtNetwork network : networkService.tenantNetworks()) {
-                    initializeTenantPipeline(network, node, false);
-                }
+        @Override
+        public void event(DeviceEvent event) {
+            Device device = event.subject();
 
-                securityGroupService.securityGroups().forEach(securityGroup ->
-                        securityGroup.rules().forEach(
-                                KubevirtSecurityGroupHandler.this::securityGroupRuleRemoved));
+            switch (event.type()) {
+                case DEVICE_AVAILABILITY_CHANGED:
+                case DEVICE_ADDED:
+                    eventExecutor.execute(() -> {
+                        if (!isRelevantHelper()) {
+                            return;
+                        }
+
+                        KubevirtNode node = nodeService.node(device.id());
+
+                        if (node == null) {
+                            return;
+                        }
+
+                        if (deviceService.isAvailable(device.id())) {
+                            resetSecurityGroupRulesByNode(node);
+                        }
+                    });
+                    break;
+                case DEVICE_REMOVED:
+                default:
+                    // do nothing
+                    break;
+            }
+        }
+    }
+
+    private void resetSecurityGroupRulesByNode(KubevirtNode node) {
+        if (getUseSecurityGroupFlag()) {
+            initializeProviderPipeline(node, true);
+
+            for (KubevirtNetwork network : networkService.tenantNetworks()) {
+                initializeTenantPipeline(network, node, true);
             }
 
-            log.info("Reset security group info " +
-                    (getUseSecurityGroupFlag() ? "with" : "without") + " Security Group");
+            securityGroupService.securityGroups().forEach(securityGroup ->
+                    securityGroup.rules().forEach(
+                            KubevirtSecurityGroupHandler.this::securityGroupRuleAdded));
+        } else {
+            initializeProviderPipeline(node, false);
+
+            for (KubevirtNetwork network : networkService.tenantNetworks()) {
+                initializeTenantPipeline(network, node, false);
+            }
+
+            securityGroupService.securityGroups().forEach(securityGroup ->
+                    securityGroup.rules().forEach(
+                            KubevirtSecurityGroupHandler.this::securityGroupRuleRemoved));
         }
+
+        log.info("Reset security group info " +
+                (getUseSecurityGroupFlag() ? "with" : "without") + " Security Group");
     }
 }
