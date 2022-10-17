@@ -1378,6 +1378,10 @@ public class KubevirtNetworkHandler {
                 case KUBEVIRT_PORT_REMOVED:
                     eventExecutor.execute(() -> processPortDeletion(event.subject()));
                     break;
+                case KUBEVIRT_PORT_MIGRATED:
+                    eventExecutor.execute(() -> processPortCreation(event.subject()));
+                    eventExecutor.execute(() -> processPortDeletion(event.oldSubject()));
+                    break;
                 default:
                     //do nothing
                     break;

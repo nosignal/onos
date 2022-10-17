@@ -225,10 +225,12 @@ public class KubevirtVmiWatcher {
                 KubevirtPort existing = portAdminService.port(port.macAddress());
 
                 if (existing != null) {
-                    if (port.deviceId() != null && existing.deviceId() == null) {
-                        KubevirtPort updated = existing.updateDeviceId(port.deviceId());
-                        // internal we update device ID of kubevirt port
-                        portAdminService.updatePort(updated);
+                    if (port.deviceId() != null) {
+                        if (existing.deviceId() == null || existing.deviceId() != port.deviceId()) {
+                            KubevirtPort updated = existing.updateDeviceId(port.deviceId());
+                            // internally we update device ID of kubevirt port
+                            portAdminService.updatePort(updated);
+                        }
                     }
                 }
             });
