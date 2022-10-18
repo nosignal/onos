@@ -15,25 +15,16 @@
  */
 package org.onosproject.kubevirtnetworking.impl;
 
-import com.eclipsesource.json.JsonArray;
-import com.eclipsesource.json.JsonObject;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.WatcherException;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import org.apache.commons.lang.StringUtils;
-import org.onlab.packet.IpAddress;
-import org.onlab.packet.IpPrefix;
 import org.onosproject.cluster.ClusterService;
 import org.onosproject.cluster.LeadershipService;
 import org.onosproject.cluster.NodeId;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
-import org.onosproject.kubevirtnetworking.api.DefaultKubevirtNetwork;
-import org.onosproject.kubevirtnetworking.api.KubevirtHostRoute;
-import org.onosproject.kubevirtnetworking.api.KubevirtIpPool;
 import org.onosproject.kubevirtnetworking.api.KubevirtNetwork;
-import org.onosproject.kubevirtnetworking.api.KubevirtNetwork.Type;
 import org.onosproject.kubevirtnetworking.api.KubevirtNetworkAdminService;
 import org.onosproject.kubevirtnode.api.KubevirtApiConfigEvent;
 import org.onosproject.kubevirtnode.api.KubevirtApiConfigListener;
@@ -47,17 +38,14 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.onlab.util.Tools.groupedThreads;
 import static org.onosproject.kubevirtnetworking.api.Constants.KUBEVIRT_NETWORKING_APP_ID;
-import static org.onosproject.kubevirtnetworking.api.KubevirtNetwork.Type.FLAT;
 import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.k8sClient;
+import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.parseKubevirtNetwork;
 import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.parseResourceName;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -68,21 +56,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class NetworkAttachmentDefinitionWatcher {
 
     private final Logger log = getLogger(getClass());
-
-    private static final String NETWORK_CONFIG = "network-config";
-    private static final String TYPE = "type";
-    private static final String MTU = "mtu";
-    private static final String SEGMENT_ID = "segmentId";
-    private static final String GATEWAY_IP = "gatewayIp";
-    private static final String DEFAULT_ROUTE = "defaultRoute";
-    private static final String CIDR = "cidr";
-    private static final String HOST_ROUTES = "hostRoutes";
-    private static final String DESTINATION = "destination";
-    private static final String NEXTHOP = "nexthop";
-    private static final String IP_POOL = "ipPool";
-    private static final String START = "start";
-    private static final String END = "end";
-    private static final String DNSES = "dnses";
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY)
     protected CoreService coreService;
@@ -266,81 +239,6 @@ public class NetworkAttachmentDefinitionWatcher {
 
         private boolean isMaster() {
             return Objects.equals(localNodeId, leadershipService.getLeader(appId.name()));
-        }
-
-        private KubevirtNetwork parseKubevirtNetwork(String resource) {
-                JsonObject json = JsonObject.readFrom(resource);
-                String name = parseResourceName(resource);
-                JsonObject annots = json.get("metadata").asObject().get("annotations").asObject();
-                if (annots.get(NETWORK_CONFIG) == null) {
-                    // SR-IOV network does not contain network-config field
-                    return null;
-                }
-                String networkConfig = annots.get(NETWORK_CONFIG).asString();
-                if (networkConfig != null) {
-                    KubevirtNetwork.Builder builder = DefaultKubevirtNetwork.builder();
-
-                    JsonObject configJson = JsonObject.readFrom(networkConfig);
-                    String type = configJson.get(TYPE).asString().toUpperCase(Locale.ROOT);
-                    Integer mtu = configJson.get(MTU).asInt();
-                    String gatewayIp = configJson.getString(GATEWAY_IP, "");
-                    boolean defaultRoute = configJson.getBoolean(DEFAULT_ROUTE, false);
-
-                    if (!type.equalsIgnoreCase(FLAT.name())) {
-                        builder.segmentId(configJson.getString(SEGMENT_ID, ""));
-                    }
-
-                    String cidr = configJson.getString(CIDR, "");
-
-                    JsonObject poolJson = configJson.get(IP_POOL).asObject();
-                    if (poolJson != null) {
-                        String start = poolJson.getString(START, "");
-                        String end = poolJson.getString(END, "");
-                        builder.ipPool(new KubevirtIpPool(
-                                IpAddress.valueOf(start), IpAddress.valueOf(end)));
-                    }
-
-                    if (configJson.get(HOST_ROUTES) != null) {
-                        JsonArray routesJson = configJson.get(HOST_ROUTES).asArray();
-                        Set<KubevirtHostRoute> hostRoutes = new HashSet<>();
-                        if (routesJson != null) {
-                            for (int i = 0; i < routesJson.size(); i++) {
-                                JsonObject route = routesJson.get(i).asObject();
-                                String destinationStr = route.getString(DESTINATION, "");
-                                String nexthopStr = route.getString(NEXTHOP, "");
-
-                                if (StringUtils.isNotEmpty(destinationStr) &&
-                                        StringUtils.isNotEmpty(nexthopStr)) {
-                                    hostRoutes.add(new KubevirtHostRoute(
-                                            IpPrefix.valueOf(destinationStr),
-                                            IpAddress.valueOf(nexthopStr)));
-                                }
-                            }
-                        }
-                        builder.hostRoutes(hostRoutes);
-                    }
-
-                    if (configJson.get(DNSES) != null) {
-                        JsonArray dnsesJson = configJson.get(DNSES).asArray();
-                        Set<IpAddress> dnses = new HashSet<>();
-                        if (dnsesJson != null) {
-                            for (int i = 0; i < dnsesJson.size(); i++) {
-                                String dns = dnsesJson.get(i).asString();
-                                if (StringUtils.isNotEmpty(dns)) {
-                                    dnses.add(IpAddress.valueOf(dns));
-                                }
-                            }
-                        }
-                        builder.dnses(dnses);
-                    }
-
-                    builder.networkId(name).name(name).type(Type.valueOf(type))
-                            .mtu(mtu).gatewayIp(IpAddress.valueOf(gatewayIp))
-                            .defaultRoute(defaultRoute).cidr(cidr);
-
-                    return builder.build();
-                }
-            return null;
         }
     }
 }
