@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onosproject.kubevirtnode.cli;
+package org.onosproject.kubevirtnetworking.cli;
 
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.onosproject.cli.AbstractShellCommand;
+import org.onosproject.kubevirtnetworking.api.KubevirtNetwork;
+import org.onosproject.kubevirtnetworking.api.KubevirtNetworkService;
 import org.onosproject.kubevirtnode.api.KubevirtNode;
 import org.onosproject.kubevirtnode.api.KubevirtNodeService;
 import org.onosproject.kubevirtnode.api.KubevirtPhyInterface;
@@ -28,12 +30,16 @@ import org.onosproject.net.DeviceId;
 import org.onosproject.net.Port;
 import org.onosproject.net.device.DeviceService;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import static org.onosproject.kubevirtnode.api.Constants.GENEVE;
 import static org.onosproject.kubevirtnode.api.Constants.GRE;
 import static org.onosproject.kubevirtnode.api.Constants.INTEGRATION_BRIDGE;
 import static org.onosproject.kubevirtnode.api.Constants.STT;
 import static org.onosproject.kubevirtnode.api.Constants.TUNNEL_BRIDGE;
 import static org.onosproject.kubevirtnode.api.Constants.VXLAN;
+import static org.onosproject.kubevirtnode.api.KubevirtNode.Type.WORKER;
 import static org.onosproject.net.AnnotationKeys.PORT_NAME;
 
 /**
@@ -57,6 +63,7 @@ public class KubevirtCheckNodeCommand extends AbstractShellCommand {
     @Override
     protected void doExecute() throws Exception {
         KubevirtNodeService nodeService = get(KubevirtNodeService.class);
+        KubevirtNetworkService networkService = get(KubevirtNetworkService.class);
         DeviceService deviceService = get(DeviceService.class);
 
         KubevirtNode node = nodeService.node(hostname);
@@ -108,6 +115,27 @@ public class KubevirtCheckNodeCommand extends AbstractShellCommand {
                             deviceService.isAvailable(physBridge.id()),
                             physBridge.annotations());
                     printPortState(deviceService, physBridge.id(), phyIntf.intf());
+                }
+            }
+        }
+
+        Set<KubevirtNetwork> networks = networkService.networks().stream()
+                .filter(n -> n.type() == KubevirtNetwork.Type.VXLAN ||
+                        n.type() == KubevirtNetwork.Type.GRE ||
+                        n.type() == KubevirtNetwork.Type.GENEVE ||
+                        n.type() == KubevirtNetwork.Type.STT).collect(Collectors.toSet());
+        if (networks.size() > 0 && node.type() == WORKER) {
+            print("");
+            print("[Tenant Network Bridge Status]");
+            for (KubevirtNetwork network : networks) {
+                Device tenantBridge = deviceService.getDevice(network.tenantDeviceId(node.hostname()));
+                if (tenantBridge != null) {
+                    print("%s %s=%s available=%s %s",
+                            deviceService.isAvailable(tenantBridge.id()) ? MSG_PASS : MSG_FAIL,
+                            network.tenantBridgeName(),
+                            tenantBridge.id(),
+                            deviceService.isAvailable(tenantBridge.id()),
+                            tenantBridge.annotations());
                 }
             }
         }
