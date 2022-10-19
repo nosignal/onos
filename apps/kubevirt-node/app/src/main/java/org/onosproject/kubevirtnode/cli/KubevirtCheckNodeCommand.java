@@ -22,6 +22,7 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.onosproject.cli.AbstractShellCommand;
 import org.onosproject.kubevirtnode.api.KubevirtNode;
 import org.onosproject.kubevirtnode.api.KubevirtNodeService;
+import org.onosproject.kubevirtnode.api.KubevirtPhyInterface;
 import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.Port;
@@ -50,6 +51,8 @@ public class KubevirtCheckNodeCommand extends AbstractShellCommand {
 
     private static final String MSG_PASS = "PASS";
     private static final String MSG_FAIL = "FAIL";
+
+    private static final String BRIDGE_PREFIX = "br-";
 
     @Override
     protected void doExecute() throws Exception {
@@ -89,6 +92,23 @@ public class KubevirtCheckNodeCommand extends AbstractShellCommand {
                 printPortState(deviceService, node.tunBridge(), GRE);
                 printPortState(deviceService, node.tunBridge(), GENEVE);
                 printPortState(deviceService, node.tunBridge(), STT);
+            }
+        }
+
+        if (node.phyIntfs().size() > 0) {
+            print("");
+            print("[Physical Network Bridge Status]");
+            for (KubevirtPhyInterface phyIntf : node.phyIntfs()) {
+                Device physBridge = deviceService.getDevice(phyIntf.physBridge());
+                if (physBridge != null) {
+                    print("%s %s=%s available=%s %s",
+                            deviceService.isAvailable(physBridge.id()) ? MSG_PASS : MSG_FAIL,
+                            BRIDGE_PREFIX + phyIntf.network(),
+                            physBridge.id(),
+                            deviceService.isAvailable(physBridge.id()),
+                            physBridge.annotations());
+                    printPortState(deviceService, physBridge.id(), phyIntf.intf());
+                }
             }
         }
     }
