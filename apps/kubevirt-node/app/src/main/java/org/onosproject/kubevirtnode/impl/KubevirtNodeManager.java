@@ -316,9 +316,7 @@ public class KubevirtNodeManager
 
     private boolean hasPhyBridge(KubevirtNode node, DeviceId deviceId) {
         return node.phyIntfs().stream()
-                .filter(phyIntf -> phyIntf.physBridge().equals(deviceId))
-                .findAny()
-                .isPresent();
+                .anyMatch(phyIntf -> phyIntf.physBridge().equals(deviceId));
     }
 
     private boolean hasIntgBridge(DeviceId deviceId, String hostname) {
