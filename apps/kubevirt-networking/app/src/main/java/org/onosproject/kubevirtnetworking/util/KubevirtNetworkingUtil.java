@@ -53,6 +53,7 @@ import org.onosproject.kubevirtnetworking.api.KubevirtRouter;
 import org.onosproject.kubevirtnetworking.api.KubevirtRouterService;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtNode;
 import org.onosproject.kubevirtnode.api.DefaultKubevirtPhyInterface;
+import org.onosproject.kubevirtnode.api.KubernetesExternalLbConfig;
 import org.onosproject.kubevirtnode.api.KubernetesExternalLbInterface;
 import org.onosproject.kubevirtnode.api.KubevirtApiConfig;
 import org.onosproject.kubevirtnode.api.KubevirtApiConfigService;
@@ -557,14 +558,30 @@ public final class KubevirtNetworkingUtil {
                                                               KubernetesExternalLb externalLb) {
         //TODO: enhance election logic for a better load balancing
 
-        int numOfGateways = nodeService.completeNodes(GATEWAY).size();
+        int numOfGateways = nodeService.completeExternalLbGatewayNodes().size();
         if (numOfGateways == 0) {
             return null;
         }
 
-        return (KubevirtNode) nodeService.completeNodes(GATEWAY)
+        return (KubevirtNode) nodeService.completeExternalLbGatewayNodes()
                 .toArray()[externalLb.hashCode() % numOfGateways];
     }
+
+    /**
+     * Returns whether a mac address in kubernetes external lb config is updated.
+     *
+     * @param externalLbConfig kubernetes external lb config
+     * @return true if a mac address is added
+     */
+    public static boolean configMapUpdated(KubernetesExternalLbConfig externalLbConfig) {
+        if (externalLbConfig == null) {
+            return false;
+        }
+
+        return externalLbConfig.configName() != null && externalLbConfig.globalIpRange() != null &&
+                externalLbConfig.loadBalancerGwIp() != null && externalLbConfig.loadBalancerGwMac() != null;
+    }
+
 
     /**
      * Returns the worker node for the specified kubernetes external lb.

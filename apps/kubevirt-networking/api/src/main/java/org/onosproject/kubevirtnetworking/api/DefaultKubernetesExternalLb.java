@@ -34,8 +34,7 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
 
     private final String serviceName;
     private final IpAddress loadbalancerIp;
-    private final Set<Integer> nodePortSet;
-    private final Set<Integer> portSet;
+    private final Set<KubernetesServicePort> servicePorts;
     private final Set<String> endpointSet;
     private final String electedGateway;
     private final IpAddress loadbalancerGwIp;
@@ -43,14 +42,13 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
     private final String electedWorker;
 
     public DefaultKubernetesExternalLb(String serviceName, IpAddress loadbalancerIp,
-                                       Set<Integer> nodePortSet, Set<Integer> portSet,
+                                      Set<KubernetesServicePort> servicePorts,
                                        Set<String> endpointSet, String electedGateway,
                                        String electedWorker,
                                        IpAddress loadbalancerGwIp, MacAddress loadbalancerGwMac) {
         this.serviceName = serviceName;
         this.loadbalancerIp = loadbalancerIp;
-        this.nodePortSet = nodePortSet;
-        this.portSet = portSet;
+        this.servicePorts = servicePorts;
         this.endpointSet = endpointSet;
         this.electedGateway = electedGateway;
         this.electedWorker = electedWorker;
@@ -69,13 +67,8 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
     }
 
     @Override
-    public Set<Integer> nodePortSet() {
-        return ImmutableSet.copyOf(nodePortSet);
-    }
-
-    @Override
-    public Set<Integer> portSet() {
-        return ImmutableSet.copyOf(portSet);
+    public Set<KubernetesServicePort> servicePorts() {
+        return ImmutableSet.copyOf(servicePorts);
     }
 
     @Override
@@ -114,8 +107,7 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
 
         DefaultKubernetesExternalLb that = (DefaultKubernetesExternalLb) o;
         return serviceName.equals(that.serviceName) && loadbalancerIp.equals(that.loadbalancerIp) &&
-                Objects.equals(nodePortSet, that.nodePortSet) &&
-                Objects.equals(portSet, that.portSet) &&
+                Objects.equals(servicePorts, that.servicePorts) &&
                 Objects.equals(endpointSet, that.endpointSet) &&
                 Objects.equals(electedGateway, that.electedGateway) &&
                 Objects.equals(electedWorker, that.electedWorker) &&
@@ -128,8 +120,7 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
         return DefaultKubernetesExternalLb.builder()
                 .serviceName(serviceName)
                 .loadBalancerIp(loadbalancerIp)
-                .nodePortSet(nodePortSet)
-                .portSet(portSet)
+                .servicePorts(servicePorts)
                 .endpointSet(endpointSet)
                 .electedGateway(electedGateway)
                 .electedWorker(electedWorker)
@@ -143,8 +134,7 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
         return DefaultKubernetesExternalLb.builder()
                 .serviceName(serviceName)
                 .loadBalancerIp(loadbalancerIp)
-                .nodePortSet(nodePortSet)
-                .portSet(portSet)
+                .servicePorts(servicePorts)
                 .endpointSet(endpointSet)
                 .electedGateway(electedGateway)
                 .electedWorker(electedWorker)
@@ -163,8 +153,7 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
         return MoreObjects.toStringHelper(this)
                 .add("serviceName", serviceName)
                 .add("loadbalancerIp", loadbalancerIp)
-                .add("nodePort", nodePortSet)
-                .add("port", portSet)
+                .add("servucePorts", servicePorts)
                 .add("endpointSet", endpointSet)
                 .add("electedGateway", electedGateway)
                 .add("electedWorker", electedWorker)
@@ -180,8 +169,7 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
     public static final class Builder implements KubernetesExternalLb.Builder {
         private String serviceName;
         private IpAddress loadbalancerIp;
-        private Set<Integer> nodePortSet;
-        private Set<Integer> portSet;
+        private Set<KubernetesServicePort> servicePorts;
         private Set<String> endpointSet;
         private String electedGateway;
         private String electedWorker;
@@ -195,11 +183,10 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
         public KubernetesExternalLb build() {
             checkArgument(serviceName != null, NOT_NULL_MSG, "serviceName");
             checkArgument(loadbalancerIp != null, NOT_NULL_MSG, "loadbalancerIp");
-            checkArgument(!nodePortSet.isEmpty(), NOT_NULL_MSG, "nodePortSet");
-            checkArgument(!portSet.isEmpty(), NOT_NULL_MSG, "portSet");
+            checkArgument(!servicePorts.isEmpty(), NOT_NULL_MSG, "servicePorts");
 
             return new DefaultKubernetesExternalLb(serviceName, loadbalancerIp,
-                    nodePortSet, portSet, endpointSet, electedGateway, electedWorker,
+                    servicePorts, endpointSet, electedGateway, electedWorker,
                     loadbalancerGwip, loadbalancerGwMac);
         }
 
@@ -216,14 +203,8 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
         }
 
         @Override
-        public Builder nodePortSet(Set<Integer> nodePortSet) {
-            this.nodePortSet = nodePortSet;
-            return this;
-        }
-
-        @Override
-        public Builder portSet(Set<Integer> portSet) {
-            this.portSet = portSet;
+        public Builder servicePorts(Set<KubernetesServicePort> servicePorts) {
+            this.servicePorts = servicePorts;
             return this;
         }
 

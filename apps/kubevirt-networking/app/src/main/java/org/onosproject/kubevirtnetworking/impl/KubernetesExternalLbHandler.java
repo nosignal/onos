@@ -80,7 +80,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class KubernetesExternalLbHandler {
     protected final Logger log = getLogger(getClass());
 
-    private static final int TP_PORT_MINIMUM_NUM = 1025;
+    private static final int TP_PORT_MINIMUM_NUM = 10000;
     private static final int TP_PORT_MAXIMUM_NUM = 65535;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY)
@@ -182,9 +182,9 @@ public class KubernetesExternalLbHandler {
                 return;
             }
 
-            if (lb.electedGateway() == null || lb.electedWorker() == null) {
+            if (lb.electedGateway() == null || lb.electedWorker() == null || lb.loadBalancerGwMac() == null) {
                 log.warn("processKubernetesExternalLbCreatedOrUpdated called but electedGateway " +
-                        "or electedWorker is null. Stop this task.");
+                        "or electedWorker or loadBalancerGwMacis null. Stop this task.");
                 return;
             }
 
@@ -198,7 +198,9 @@ public class KubernetesExternalLbHandler {
                 return;
             }
 
-            if (lb.electedWorker() == null || oldGatway == null) {
+            if (lb.electedWorker() == null || oldGatway == null || lb.loadBalancerGwMac() == null) {
+                log.warn("processKubernetesExternalLbGatewayChanged called but old electedWorker " +
+                        "or electedWorker or loadBalancerGwMacis null. Stop this task.");
                 return;
             }
 
@@ -326,13 +328,13 @@ public class KubernetesExternalLbHandler {
             return;
         }
 
-        lb.nodePortSet().forEach(nodeport -> {
+        lb.servicePorts().forEach(servicePort -> {
             TrafficSelector selector = DefaultTrafficSelector.builder()
                     .matchEthType(Ethernet.TYPE_IPV4)
                     .matchEthDst(KUBERNETES_EXTERNAL_LB_FAKE_MAC)
                     .matchIPDst(loadBalancerIp.toIpPrefix())
                     .matchIPProtocol(IPv4.PROTOCOL_TCP)
-                    .matchTcpDst(TpPort.tpPort(nodeport.intValue()))
+                    .matchTcpDst(TpPort.tpPort(servicePort.port().intValue()))
                     .build();
 
             ExtensionTreatment natTreatment = RulePopulatorUtil
@@ -351,6 +353,7 @@ public class KubernetesExternalLbHandler {
                     .setEthSrc(elbIntfMac)
                     .setEthDst(externalLbInterface.externalLbGwMac())
                     .setIpDst(electedWorker.dataIp())
+                    .setTcpDst(TpPort.tpPort(servicePort.nodePort().intValue()))
                     .setOutput(elbBridgePortNum)
                     .build();
 
@@ -404,13 +407,13 @@ public class KubernetesExternalLbHandler {
             return;
         }
 
-        lb.nodePortSet().forEach(nodePort -> {
+        lb.servicePorts().forEach(servicePort -> {
             TrafficSelector.Builder sBuilder = DefaultTrafficSelector.builder()
                     .matchEthType(Ethernet.TYPE_IPV4)
                     .matchIPSrc(electedWorker.dataIp().toIpPrefix())
                     .matchIPDst(externalLbInterface.externalLbIp().toIpPrefix())
                     .matchIPProtocol(IPv4.PROTOCOL_TCP)
-                    .matchTcpSrc(TpPort.tpPort(nodePort.intValue()));
+                    .matchTcpSrc(TpPort.tpPort(servicePort.nodePort().intValue()));
 
             ExtensionTreatment natTreatment = RulePopulatorUtil
                     .niciraConnTrackTreatmentBuilder(driverService, gateway.intgBridge())
@@ -423,6 +426,7 @@ public class KubernetesExternalLbHandler {
                     .setEthSrc(KUBERNETES_EXTERNAL_LB_FAKE_MAC)
                     .setIpSrc(lb.loadBalancerIp())
                     .setEthDst(lb.loadBalancerGwMac())
+                    .setTcpSrc(TpPort.tpPort(servicePort.port().intValue()))
                     .extension(natTreatment, gateway.intgBridge())
                     .transition(GW_DROP_TABLE);
 
@@ -438,13 +442,12 @@ public class KubernetesExternalLbHandler {
             sBuilder = DefaultTrafficSelector.builder()
                     .matchEthType(Ethernet.TYPE_IPV4)
                     .matchIPProtocol(IPv4.PROTOCOL_TCP)
-                    .matchTcpSrc(TpPort.tpPort(nodePort.intValue()));
-
+                    .matchEthSrc(KUBERNETES_EXTERNAL_LB_FAKE_MAC)
+                    .matchIPSrc(lb.loadBalancerIp().toIpPrefix())
+                    .matchEthDst(lb.loadBalancerGwMac())
+                    .matchTcpSrc(TpPort.tpPort(servicePort.port().intValue()));
 
             tBuilder = DefaultTrafficTreatment.builder()
-                    .setEthSrc(KUBERNETES_EXTERNAL_LB_FAKE_MAC)
-                    .setIpSrc(lb.loadBalancerIp())
-                    .setEthDst(lb.loadBalancerGwMac())
                     .setOutput(externalPatchPortNum);
 
             flowService.setRule(

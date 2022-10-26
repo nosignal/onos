@@ -109,7 +109,6 @@ public class DefaultKubernetesExternalLbInterface implements KubernetesExternalL
             checkArgument(elbBridgeName != null, NOT_NULL_MSG, "externalLbBridgeName");
             checkArgument(elbIp != null, NOT_NULL_MSG, "externalLbIp");
             checkArgument(elbGwIp != null, NOT_NULL_MSG, "externalLbGwIp");
-            checkArgument(elbGwMac != null, NOT_NULL_MSG, "externalLbGwMac");
 
             return new DefaultKubernetesExternalLbInterface(elbBridgeName, elbIp, elbGwIp, elbGwMac);
         }

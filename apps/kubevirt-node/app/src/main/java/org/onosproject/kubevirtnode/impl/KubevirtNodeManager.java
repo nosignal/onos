@@ -24,6 +24,7 @@ import org.onosproject.cluster.LeadershipService;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.event.ListenerRegistry;
+import org.onosproject.kubevirtnode.api.KubernetesExternalLbInterface;
 import org.onosproject.kubevirtnode.api.KubevirtNode;
 import org.onosproject.kubevirtnode.api.KubevirtNodeAdminService;
 import org.onosproject.kubevirtnode.api.KubevirtNodeEvent;
@@ -59,6 +60,7 @@ import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.onlab.util.Tools.groupedThreads;
 import static org.onosproject.kubevirtnode.api.Constants.INTEGRATION_BRIDGE;
 import static org.onosproject.kubevirtnode.api.Constants.TUNNEL_BRIDGE;
+import static org.onosproject.kubevirtnode.api.KubevirtNode.Type.GATEWAY;
 import static org.onosproject.kubevirtnode.impl.OsgiPropertyConstants.OVSDB_PORT;
 import static org.onosproject.kubevirtnode.impl.OsgiPropertyConstants.OVSDB_PORT_NUM_DEFAULT;
 import static org.onosproject.kubevirtnode.util.KubevirtNodeUtil.genDpidFromName;
@@ -270,6 +272,23 @@ public class KubevirtNodeManager
         Set<KubevirtNode> nodes = nodeStore.nodes().stream()
                 .filter(node -> node.type() == type &&
                         node.state() == KubevirtNodeState.COMPLETE)
+                .collect(Collectors.toSet());
+        return ImmutableSet.copyOf(nodes);
+    }
+
+    @Override
+    public Set<KubevirtNode> completeExternalLbGatewayNodes() {
+        Set<KubevirtNode> nodes = nodeStore.nodes().stream()
+                .filter(node -> node.type() == GATEWAY &&
+                        node.state() == KubevirtNodeState.COMPLETE)
+                .filter(node -> {
+                    KubernetesExternalLbInterface externalLbInterface = node.kubernetesExternalLbInterface();
+
+                    if (externalLbInterface != null) {
+                        return true;
+                    }
+                    return false;
+                })
                 .collect(Collectors.toSet());
         return ImmutableSet.copyOf(nodes);
     }

@@ -193,6 +193,31 @@ public class DefaultKubevirtNode implements KubevirtNode {
     }
 
     @Override
+    public KubevirtNode updateKubernetesElbIntfGwMac(MacAddress macAddress) {
+
+        KubernetesExternalLbInterface externalLbInterface = DefaultKubernetesExternalLbInterface.builder()
+                .externalLbIp(this.kubernetesExternalLbIntf.externalLbIp())
+                .externalLbBridgeName(this.kubernetesExternalLbIntf.externalLbBridgeName())
+                .externallbGwIp(this.kubernetesExternalLbIntf.externalLbGwIp())
+                .externalLbGwMac(macAddress)
+                .build();
+
+        return new Builder()
+                .hostname(hostname)
+                .clusterName(clusterName)
+                .type(type)
+                .intgBridge(intgBridge)
+                .tunBridge(tunBridge)
+                .managementIp(managementIp)
+                .dataIp(dataIp)
+                .state(state)
+                .phyIntfs(phyIntfs)
+                .gatewayBridgeName(gatewayBridgeName)
+                .kubernetesExternalLbInterface(externalLbInterface)
+                .build();
+    }
+
+    @Override
     public Collection<KubevirtPhyInterface> phyIntfs() {
         if (phyIntfs == null) {
             return new ArrayList<>();
@@ -366,10 +391,6 @@ public class DefaultKubevirtNode implements KubevirtNode {
         private KubevirtNodeState state;
         private Collection<KubevirtPhyInterface> phyIntfs;
         private String gatewayBridgeName;
-        private String elbBridgeName;
-        private IpAddress elbIp;
-        private IpAddress elbGwIp;
-        private MacAddress elbGwMac;
         private KubernetesExternalLbInterface kubernetesExternalLbInterface;
 
         // private constructor not intended to use from external

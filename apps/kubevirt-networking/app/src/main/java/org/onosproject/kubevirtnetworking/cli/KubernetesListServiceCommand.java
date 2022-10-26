@@ -27,6 +27,7 @@ import org.onosproject.kubevirtnetworking.api.KubernetesExternalLbService;
 import java.util.List;
 
 import static org.onosproject.kubevirtnetworking.api.Constants.CLI_IP_ADDRESS_LENGTH;
+import static org.onosproject.kubevirtnetworking.api.Constants.CLI_LONG_SERVICE_PORT_LENGTH;
 import static org.onosproject.kubevirtnetworking.api.Constants.CLI_MAC_ADDRESS_LENGTH;
 import static org.onosproject.kubevirtnetworking.api.Constants.CLI_MARGIN_LENGTH;
 import static org.onosproject.kubevirtnetworking.api.Constants.CLI_NAME_LENGTH;
@@ -47,11 +48,12 @@ public class KubernetesListServiceCommand extends AbstractShellCommand {
         List<KubernetesExternalLb> elbList = Lists.newArrayList(service.loadBalancers());
 
         String format = genFormatString(ImmutableList.of(CLI_NAME_LENGTH, CLI_IP_ADDRESS_LENGTH,
-                CLI_NAME_LENGTH, CLI_NAME_LENGTH, CLI_IP_ADDRESS_LENGTH, CLI_MAC_ADDRESS_LENGTH));
+                CLI_NAME_LENGTH, CLI_NAME_LENGTH, CLI_IP_ADDRESS_LENGTH, CLI_MAC_ADDRESS_LENGTH,
+                CLI_LONG_SERVICE_PORT_LENGTH));
 
 
         print(format, "Service Name", "Loadbalancer IP", "Elected Gateway", "Elected Worker",
-                "Loadbalancer GW IP", "Loadbalancer GW MAC");
+                "Loadbalancer GW IP", "Loadbalancer GW MAC", "Service Port");
 
         for (KubernetesExternalLb elb : elbList) {
             String lbIp = elb.loadBalancerIp() == null ? "N/A" : elb.loadBalancerIp().toString();
@@ -59,6 +61,7 @@ public class KubernetesListServiceCommand extends AbstractShellCommand {
             String electedWorker = elb.electedWorker() == null ? "N/A" : elb.electedWorker();
             String lbGwIp = elb.loadBalancerGwIp() == null ? "N/A" : elb.loadBalancerGwIp().toString();
             String lbGwMac = elb.loadBalancerGwMac() == null ? "N/A" : elb.loadBalancerGwMac().toString();
+            String lbServicePort = elb.servicePorts().isEmpty() ? "N/A" : elb.servicePorts().toString();
 
             print(format, StringUtils.substring(elb.serviceName(), 0,
                     CLI_NAME_LENGTH - CLI_MARGIN_LENGTH),
@@ -71,7 +74,9 @@ public class KubernetesListServiceCommand extends AbstractShellCommand {
                     StringUtils.substring(lbGwIp, 0,
                             CLI_IP_ADDRESS_LENGTH - CLI_MARGIN_LENGTH),
                     StringUtils.substring(lbGwMac, 0,
-                            CLI_MAC_ADDRESS_LENGTH - CLI_MARGIN_LENGTH)
+                            CLI_MAC_ADDRESS_LENGTH - CLI_MARGIN_LENGTH),
+                    StringUtils.substring(lbServicePort, 0,
+                            CLI_LONG_SERVICE_PORT_LENGTH - CLI_MARGIN_LENGTH)
             );
         }
     }

@@ -16,6 +16,7 @@
 package org.onosproject.kubevirtnode.api;
 
 import org.onlab.packet.IpAddress;
+import org.onlab.packet.MacAddress;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.PortNumber;
 
@@ -138,6 +139,13 @@ public interface KubevirtNode {
      * @return updated kubevirt node
      */
     KubevirtNode updateTunBridge(DeviceId deviceId);
+
+    /**
+     * Returns new kubevirt node instance with given kubernetes external lb intf gw mac.
+     * @param macAddress kubernetes external lb intf gw mac
+     * @return updated kubevirt node
+     */
+    KubevirtNode updateKubernetesElbIntfGwMac(MacAddress macAddress);
 
     /**
      * Returns a collection of physical interfaces.

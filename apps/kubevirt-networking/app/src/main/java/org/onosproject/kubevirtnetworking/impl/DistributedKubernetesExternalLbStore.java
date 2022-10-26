@@ -21,10 +21,12 @@ import org.onlab.util.KryoNamespace;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.kubevirtnetworking.api.DefaultKubernetesExternalLb;
+import org.onosproject.kubevirtnetworking.api.DefaultKubernetesServicePort;
 import org.onosproject.kubevirtnetworking.api.KubernetesExternalLb;
 import org.onosproject.kubevirtnetworking.api.KubernetesExternalLbEvent;
 import org.onosproject.kubevirtnetworking.api.KubernetesExternalLbStore;
 import org.onosproject.kubevirtnetworking.api.KubernetesExternalLbStoreDelegate;
+import org.onosproject.kubevirtnetworking.api.KubernetesServicePort;
 import org.onosproject.store.AbstractStore;
 import org.onosproject.store.serializers.KryoNamespaces;
 import org.onosproject.store.service.ConsistentMap;
@@ -72,6 +74,8 @@ public class DistributedKubernetesExternalLbStore
             .register(KryoNamespaces.API)
             .register(KubernetesExternalLb.class)
             .register(DefaultKubernetesExternalLb.class)
+            .register(KubernetesServicePort.class)
+            .register(DefaultKubernetesServicePort.class)
             .register(IpAddress.class)
             .register(Collection.class)
             .build();
