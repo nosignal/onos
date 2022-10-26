@@ -34,8 +34,10 @@ import org.onosproject.cluster.NodeId;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.kubevirtnetworking.api.DefaultKubernetesExternalLb;
+import org.onosproject.kubevirtnetworking.api.DefaultKubernetesServicePort;
 import org.onosproject.kubevirtnetworking.api.KubernetesExternalLb;
 import org.onosproject.kubevirtnetworking.api.KubernetesExternalLbAdminService;
+import org.onosproject.kubevirtnetworking.api.KubernetesServicePort;
 import org.onosproject.kubevirtnode.api.KubernetesExternalLbConfig;
 import org.onosproject.kubevirtnode.api.KubernetesExternalLbConfigEvent;
 import org.onosproject.kubevirtnode.api.KubernetesExternalLbConfigListener;
@@ -63,6 +65,7 @@ import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.onlab.util.Tools.groupedThreads;
 import static org.onosproject.kubevirtnetworking.api.Constants.KUBEVIRT_NETWORKING_APP_ID;
+import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.configMapUpdated;
 import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.gatewayNodeForSpecifiedService;
 import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.k8sClient;
 import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.workerNodeForSpecifiedService;
@@ -175,7 +178,7 @@ public class KubernetesServiceWatcher {
             switch (event.type()) {
                 case KUBERNETES_EXTERNAL_LB_CONFIG_CREATED:
                 case KUBERNETES_EXTERNAL_LB_CONFIG_UPDATED:
-                    eventExecutor.execute(this::processConfigUpdate);
+                    eventExecutor.execute(() -> processConfigUpdate(event.subject()));
                     break;
                 case KUBERNETES_EXTERNAL_LB_CONFIG_REMOVED:
                 default:
@@ -184,11 +187,13 @@ public class KubernetesServiceWatcher {
             }
         }
 
-        private void processConfigUpdate() {
+        private void processConfigUpdate(KubernetesExternalLbConfig externalLbConfig) {
             if (!isRelevantHelper()) {
                 return;
             }
-            addOrUpdateExternalLoadBalancers();
+            if (configMapUpdated(externalLbConfig)) {
+                addOrUpdateExternalLoadBalancers();
+            }
         }
     }
 
@@ -261,7 +266,9 @@ public class KubernetesServiceWatcher {
                 return;
             }
 
-            if (!configMapUpdated()) {
+            KubernetesExternalLbConfig config = lbConfigService.lbConfigs().stream().findAny().orElse(null);
+
+            if (!configMapUpdated(config)) {
                 log.warn("Config map is not set yet. Stop this task");
                 return;
             }
@@ -390,17 +397,6 @@ public class KubernetesServiceWatcher {
                 .findAny().isPresent();
     }
 
-    private boolean configMapUpdated() {
-        KubernetesExternalLbConfig config = lbConfigService.lbConfigs().stream().findAny().orElse(null);
-
-        if (config == null) {
-            return false;
-        }
-
-        return config.configName() != null && config.globalIpRange() != null &&
-                config.loadBalancerGwIp() != null && config.loadBalancerGwMac() != null;
-    }
-
     //Only process if the event when the service type is LoadBalancer
     private boolean isLoadBalancerType(Service service) {
         return service.getSpec().getType().equals(TYPE_LOADBALANCER);
@@ -421,13 +417,15 @@ public class KubernetesServiceWatcher {
             return null;
         }
 
-        Set<Integer> nodePortSet = Sets.newHashSet();
-        Set<Integer> portSet = Sets.newHashSet();
+        Set<KubernetesServicePort> servicePorts = Sets.newHashSet();
         Set<String> endpointSet = Sets.newHashSet();
 
         service.getSpec().getPorts().forEach(servicePort -> {
-            nodePortSet.add(servicePort.getNodePort());
-            portSet.add(servicePort.getPort());
+            if (servicePort.getPort() != null && servicePort.getNodePort() != null) {
+                servicePorts.add(DefaultKubernetesServicePort.builder()
+                        .nodePort(servicePort.getNodePort())
+                        .port(servicePort.getPort()).build());
+            }
         });
 
         nodeService.completeNodes(WORKER).forEach(workerNode -> {
@@ -452,8 +450,7 @@ public class KubernetesServiceWatcher {
 
         return DefaultKubernetesExternalLb.builder().serviceName(serviceName)
                 .loadBalancerIp(IpAddress.valueOf(lbIp))
-                .nodePortSet(nodePortSet)
-                .portSet(portSet)
+                .servicePorts(servicePorts)
                 .endpointSet(endpointSet)
                 .loadBalancerGwIp(IpAddress.valueOf(loadbalancerGatewayIp))
                 .loadBalancerGwMac(loadBalancerGatewayMac)

@@ -59,6 +59,12 @@ public interface KubevirtNodeService extends ListenerService<KubevirtNodeEvent, 
     Set<KubevirtNode> completeNodes(KubevirtNode.Type type);
 
     /**
+     * Returns all gateway nodes with complete state and external lb interface added.
+     * @return set of kubevirt nodes
+     */
+    Set<KubevirtNode> completeExternalLbGatewayNodes();
+
+    /**
      * Returns the node with the specified hostname.
      *
      * @param hostname hostname

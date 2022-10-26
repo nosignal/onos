@@ -39,18 +39,11 @@ public interface KubernetesExternalLb {
     IpAddress loadBalancerIp();
 
     /**
-     * Returns the set of node port.
+     * Returns the set of service ports.
      *
      * @return node port
      */
-    Set<Integer> nodePortSet();
-
-    /**
-     * Returns the set of port.
-     *
-     * @return port number
-     */
-    Set<Integer> portSet();
+    Set<KubernetesServicePort> servicePorts();
 
     /**
      * Returns the set of endpoint.
@@ -130,21 +123,14 @@ public interface KubernetesExternalLb {
          */
         Builder loadBalancerIp(IpAddress loadBalancerIp);
 
-        /**
-         * Returns kubernetes external load balancer builder with supplied node port set.
-         *
-         * @param nodePortSet node port set
-         * @return external load balancer builder
-         */
-        Builder nodePortSet(Set<Integer> nodePortSet);
 
         /**
-         * Returns kubernetes external load balancer builder with supplied port set.
+         * Returns kubernetes external load balancer builder with supplied service port set.
          *
-         * @param portSet port set
+         * @param servicePorts service port set
          * @return external load balancer builder
          */
-        Builder portSet(Set<Integer> portSet);
+        Builder servicePorts(Set<KubernetesServicePort> servicePorts);
 
         /**
          * Returns kubernetes external load balancer builder with supplied endpoint set.

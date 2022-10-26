@@ -48,12 +48,9 @@ import java.util.concurrent.ExecutorService;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static org.onlab.util.Tools.groupedThreads;
-import static org.onosproject.kubevirtnode.api.KubernetesExternalLbConfigEvent.Type
-        .KUBERNETES_EXTERNAL_LB_CONFIG_CREATED;
-import static org.onosproject.kubevirtnode.api.KubernetesExternalLbConfigEvent.Type
-        .KUBERNETES_EXTERNAL_LB_CONFIG_REMOVED;
-import static org.onosproject.kubevirtnode.api.KubernetesExternalLbConfigEvent.Type
-        .KUBERNETES_EXTERNAL_LB_CONFIG_UPDATED;
+import static org.onosproject.kubevirtnode.api.KubernetesExternalLbConfigEvent.Type.KUBERNETES_EXTERNAL_LB_CONFIG_CREATED;
+import static org.onosproject.kubevirtnode.api.KubernetesExternalLbConfigEvent.Type.KUBERNETES_EXTERNAL_LB_CONFIG_REMOVED;
+import static org.onosproject.kubevirtnode.api.KubernetesExternalLbConfigEvent.Type.KUBERNETES_EXTERNAL_LB_CONFIG_UPDATED;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -128,7 +125,14 @@ public class DistributedKubernetesExternalLbConfigStore
         lbConfigStore.compute(lbConfig.configName(), (configName, existing) -> {
             final String error = lbConfig.configName() + ERR_NOT_FOUND;
             checkArgument(existing != null, error);
-            return lbConfig;
+
+            if (lbConfig.equals(existing) && lbConfig.loadBalancerGwMac() == null &&
+                    existing.loadBalancerGwMac() != null) {
+                return existing;
+            } else {
+                return lbConfig;
+            }
+
         });
     }
 

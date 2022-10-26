@@ -103,7 +103,7 @@ public final class DefaultKubernetesExternalLbConfig implements KubernetesExtern
         return DefaultKubernetesExternalLbConfig.builder()
                 .configName(configName)
                 .loadBalancerGwIp(loadBalancerGwIp)
-                .loadBalancerGwMac(loadBalancerGwMac)
+                .loadBalancerGwMac(gatewayMac)
                 .globalIpRange(globalIpRange)
                 .build();
     }
