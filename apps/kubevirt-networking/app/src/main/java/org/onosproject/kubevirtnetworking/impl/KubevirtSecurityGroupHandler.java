@@ -51,11 +51,8 @@ import org.onosproject.kubevirtnode.api.KubevirtNodeEvent;
 import org.onosproject.kubevirtnode.api.KubevirtNodeListener;
 import org.onosproject.kubevirtnode.api.KubevirtNodeService;
 import org.onosproject.mastership.MastershipService;
-import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.PortNumber;
-import org.onosproject.net.device.DeviceEvent;
-import org.onosproject.net.device.DeviceListener;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.driver.DriverService;
 import org.onosproject.net.flow.DefaultTrafficSelector;
@@ -199,9 +196,6 @@ public class KubevirtSecurityGroupHandler {
     @Reference(cardinality = ReferenceCardinality.MANDATORY)
     protected KubevirtSecurityGroupService securityGroupService;
 
-    private final DeviceListener deviceListener =
-            new InternalDeviceListener();
-
     private final KubevirtPortListener portListener =
             new InternalKubevirtPortListener();
     private final KubevirtSecurityGroupListener securityGroupListener =
@@ -221,7 +215,6 @@ public class KubevirtSecurityGroupHandler {
     protected void activate() {
         appId = coreService.registerApplication(KUBEVIRT_NETWORKING_APP_ID);
         localNodeId = clusterService.getLocalNode().id();
-        deviceService.addListener(deviceListener);
         securityGroupService.addListener(securityGroupListener);
         portService.addListener(portListener);
         networkService.addListener(networkListener);
@@ -238,7 +231,6 @@ public class KubevirtSecurityGroupHandler {
         configService.unregisterProperties(getClass(), false);
         nodeService.removeListener(nodeListener);
         networkService.removeListener(networkListener);
-        deviceService.removeListener(deviceListener);
         eventExecutor.shutdown();
 
         log.info("Stopped");
@@ -278,7 +270,7 @@ public class KubevirtSecurityGroupHandler {
     }
 
     private void initializeConnTrackTable(DeviceId deviceId, int ctTable,
-                                            int forwardTable, boolean install) {
+                                          int forwardTable, boolean install) {
 
         // table={ACL_INGRESS_TABLE(44)},ip,ct_state=-trk, actions=ct(table:{ACL_CT_TABLE(45)})
         long ctState = computeCtStateFlag(false, false, false);
@@ -304,7 +296,7 @@ public class KubevirtSecurityGroupHandler {
     }
 
     private void initializeTenantAclTable(KubevirtNetwork network,
-                                            DeviceId deviceId, boolean install) {
+                                          DeviceId deviceId, boolean install) {
         // FIXME: in bridge initialization phase, some patch ports may not be
         // available until they are created, we wait for a while ensure all
         // patch ports are created via network bootstrap
@@ -313,7 +305,7 @@ public class KubevirtSecurityGroupHandler {
                 break;
             } else {
                 log.info("Wait for tenant patch ports creation for device {} " +
-                         "and network {}", deviceId, network.networkId());
+                        "and network {}", deviceId, network.networkId());
                 waitFor(5);
             }
         }
@@ -355,7 +347,7 @@ public class KubevirtSecurityGroupHandler {
     }
 
     private void initializeEgressTable(DeviceId deviceId, int egressTable,
-                                        int forwardTable, boolean install) {
+                                       int forwardTable, boolean install) {
         if (install) {
             flowRuleService.setUpTableMissEntry(deviceId, TENANT_ACL_EGRESS_TABLE);
         } else {
@@ -534,21 +526,21 @@ public class KubevirtSecurityGroupHandler {
         });
 
         TrafficSelector tSelector = DefaultTrafficSelector.builder()
-                        .matchEthType(Ethernet.TYPE_IPV4)
-                        .matchEthDst(port.macAddress())
-                        .matchIPDst(IpPrefix.valueOf(port.ipAddress(), 32))
-                        .build();
+                .matchEthType(Ethernet.TYPE_IPV4)
+                .matchEthDst(port.macAddress())
+                .matchIPDst(IpPrefix.valueOf(port.ipAddress(), 32))
+                .build();
         TrafficTreatment tTreatment = DefaultTrafficTreatment.builder()
-                        .transition(TENANT_ACL_INGRESS_TABLE)
-                        .build();
+                .transition(TENANT_ACL_INGRESS_TABLE)
+                .build();
 
         flowRuleService.setRule(appId,
-                    deviceId,
-                    tSelector,
-                    tTreatment,
-                    PRIORITY_ACL_RULE,
-                    TENANT_ACL_RECIRC_TABLE,
-                    install);
+                deviceId,
+                tSelector,
+                tTreatment,
+                PRIORITY_ACL_RULE,
+                TENANT_ACL_RECIRC_TABLE,
+                install);
     }
 
     /**
@@ -920,6 +912,10 @@ public class KubevirtSecurityGroupHandler {
                 case KUBEVIRT_PORT_DEVICE_ADDED:
                     eventExecutor.execute(() -> processPortDeviceAdded(event));
                     break;
+                case KUBEVIRT_PORT_MIGRATED:
+                    eventExecutor.execute(() -> processPortDeviceAdded(event));
+                    eventExecutor.execute(() -> processOldPortRemove(event));
+                    break;
                 default:
                     // do nothing for the other events
                     break;
@@ -932,7 +928,7 @@ public class KubevirtSecurityGroupHandler {
             }
 
             if (event.securityGroupId() == null ||
-                securityGroupService.securityGroup(event.securityGroupId()) == null) {
+                    securityGroupService.securityGroup(event.securityGroupId()) == null) {
                 return;
             }
 
@@ -952,7 +948,7 @@ public class KubevirtSecurityGroupHandler {
             }
 
             if (event.securityGroupId() == null ||
-                securityGroupService.securityGroup(event.securityGroupId()) == null) {
+                    securityGroupService.securityGroup(event.securityGroupId()) == null) {
                 return;
             }
 
@@ -978,7 +974,23 @@ public class KubevirtSecurityGroupHandler {
                     updateSecurityGroupRule(port, sgRule, false);
                 });
                 log.info("Removed security group {} from port {}",
-                                        sgStr, event.subject().macAddress());
+                        sgStr, event.subject().macAddress());
+            }
+        }
+
+        private void processOldPortRemove(KubevirtPortEvent event) {
+            if (!isRelevantHelper(event)) {
+                return;
+            }
+
+            KubevirtPort oldPort = event.oldSubject();
+            for (String sgStr : oldPort.securityGroups()) {
+                KubevirtSecurityGroup sg = securityGroupService.securityGroup(sgStr);
+                sg.rules().forEach(sgRule -> {
+                    updateSecurityGroupRule(oldPort, sgRule, false);
+                });
+                log.info("Removed security group {} from port {}",
+                        sgStr, event.subject().macAddress());
             }
         }
 
@@ -1117,53 +1129,6 @@ public class KubevirtSecurityGroupHandler {
             waitFor(5);
 
             resetSecurityGroupRulesByNode(node);
-        }
-    }
-
-    /**
-     * An internal OVS listener. This listener is used for listening the network
-     * facing events from OVS device. If a new OVS device is detected, discovered,
-     * ONOS tries to install device related rules into the target kubernetes node.
-     */
-    private class InternalDeviceListener implements DeviceListener {
-
-        @Override
-        public boolean isRelevant(DeviceEvent event) {
-            return event.subject().type() == Device.Type.SWITCH;
-        }
-
-        private boolean isRelevantHelper() {
-            return Objects.equals(localNodeId, leadershipService.getLeader(appId.name()));
-        }
-
-        @Override
-        public void event(DeviceEvent event) {
-            Device device = event.subject();
-
-            switch (event.type()) {
-                case DEVICE_AVAILABILITY_CHANGED:
-                case DEVICE_ADDED:
-                    eventExecutor.execute(() -> {
-                        if (!isRelevantHelper()) {
-                            return;
-                        }
-
-                        KubevirtNode node = nodeService.node(device.id());
-
-                        if (node == null) {
-                            return;
-                        }
-
-                        if (deviceService.isAvailable(device.id())) {
-                            resetSecurityGroupRulesByNode(node);
-                        }
-                    });
-                    break;
-                case DEVICE_REMOVED:
-                default:
-                    // do nothing
-                    break;
-            }
         }
     }
 

@@ -30,6 +30,8 @@ import org.onosproject.kubevirtnetworking.api.KubevirtFlowRuleService;
 import org.onosproject.kubevirtnetworking.api.KubevirtNetwork;
 import org.onosproject.kubevirtnetworking.api.KubevirtNetworkService;
 import org.onosproject.kubevirtnetworking.api.KubevirtPort;
+import org.onosproject.kubevirtnetworking.api.KubevirtPortEvent;
+import org.onosproject.kubevirtnetworking.api.KubevirtPortListener;
 import org.onosproject.kubevirtnetworking.api.KubevirtPortService;
 import org.onosproject.kubevirtnetworking.api.KubevirtRouter;
 import org.onosproject.kubevirtnetworking.api.KubevirtRouterEvent;
@@ -133,6 +135,9 @@ public class KubevirtFloatingIpHandler {
     private final InternalNodeListener kubevirtNodeListener =
             new InternalNodeListener();
 
+    private final InternalPortListener kubevirtPortListener =
+            new InternalPortListener();
+
     @Activate
     protected void activate() {
         appId = coreService.registerApplication(KUBEVIRT_NETWORKING_APP_ID);
@@ -140,6 +145,7 @@ public class KubevirtFloatingIpHandler {
         leadershipService.runForLeadership(appId.name());
         kubevirtRouterService.addListener(kubevirtRouterListener);
         kubevirtNodeService.addListener(kubevirtNodeListener);
+        kubevirtPortService.addListener(kubevirtPortListener);
 
         log.info("Started");
     }
@@ -149,6 +155,7 @@ public class KubevirtFloatingIpHandler {
         leadershipService.withdraw(appId.name());
         kubevirtRouterService.removeListener(kubevirtRouterListener);
         kubevirtNodeService.removeListener(kubevirtNodeListener);
+        kubevirtPortService.removeListener(kubevirtPortListener);
 
         eventExecutor.shutdown();
 
@@ -217,6 +224,14 @@ public class KubevirtFloatingIpHandler {
         return kubevirtPortService.ports().stream()
                 .filter(port -> port.ipAddress().equals(floatingIp.fixedIp()))
                 .filter(port -> port.vmName().equals(floatingIp.vmName()))
+                .findAny().orElse(null);
+    }
+
+    private KubevirtFloatingIp getFloatingIpByKubevirtPort(KubevirtPort port) {
+
+        return kubevirtRouterService.floatingIps().stream()
+                .filter(fip -> port.ipAddress().equals(fip.fixedIp()))
+                .filter(fip -> port.vmName().equals(fip.vmName()))
                 .findAny().orElse(null);
     }
 
@@ -491,6 +506,55 @@ public class KubevirtFloatingIpHandler {
                                 fip.floatingIp().toString(), node.hostname());
                 }
             }
+        }
+    }
+
+    private class InternalPortListener implements KubevirtPortListener {
+
+        private boolean isRelevantHelper() {
+            return Objects.equals(localNodeId, leadershipService.getLeader(appId.name()));
+        }
+
+        @Override
+        public void event(KubevirtPortEvent event) {
+            switch (event.type()) {
+                case KUBEVIRT_PORT_MIGRATED:
+                    eventExecutor.execute(() -> processPortMigration(event.subject()));
+                    break;
+                default:
+                    // do nothing
+                    break;
+            }
+        }
+
+        private void processPortMigration(KubevirtPort port) {
+            if (!isRelevantHelper()) {
+                return;
+            }
+
+            KubevirtFloatingIp fip = getFloatingIpByKubevirtPort(port);
+            if (fip == null) {
+                return;
+            }
+
+            KubevirtRouter router = kubevirtRouterService.router(fip.routerName());
+            if (router == null) {
+                log.warn("The router {} is not found", fip.routerName());
+                return;
+            }
+
+            String gateway = router.electedGateway();
+            KubevirtNode node = kubevirtNodeService.node(gateway);
+
+            if (node == null) {
+                log.warn("The gateway node {} is not found", gateway);
+                return;
+            }
+
+            setFloatingIpRulesForFip(router, fip, node, true);
+
+            log.info("Configure floating IP {} on gateway {}",
+                            fip.floatingIp().toString(), node.hostname());
         }
     }
 }
