@@ -226,7 +226,7 @@ public class KubevirtVmiWatcher {
 
                 if (existing != null) {
                     if (port.deviceId() != null) {
-                        if (existing.deviceId() == null || existing.deviceId() != port.deviceId()) {
+                        if (existing.deviceId() == null || !existing.deviceId().equals(port.deviceId())) {
                             KubevirtPort updated = existing.updateDeviceId(port.deviceId());
                             // internally we update device ID of kubevirt port
                             portAdminService.updatePort(updated);
