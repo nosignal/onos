@@ -145,7 +145,7 @@ public final class DefaultKubernetesExternalLb implements KubernetesExternalLb {
 
     @Override
     public int hashCode() {
-        return Objects.hash(serviceName, loadbalancerIp);
+        return Objects.hash(serviceName, loadbalancerIp.hashCode());
     }
 
     @Override

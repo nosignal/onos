@@ -188,7 +188,7 @@ public class KubernetesExternalLbHandler {
                 return;
             }
 
-            log.trace("processKubernetesExternalLbCreatedOrUpdated and updated elb with elecedGateway: {}", lb);
+            log.info("Create or update elb {}", lb);
 
             setExternalLbRulesForService(lb, true);
         }
@@ -204,7 +204,8 @@ public class KubernetesExternalLbHandler {
                 return;
             }
 
-            log.trace("processKubernetesExternalLbGatewayChanged with oldateway: {}", oldGatway);
+            log.info("KubernetesExternalLbGatewayChanged from oldateway {} to new gateway {}",
+                    oldGatway, lb.electedGateway());
 
             setExternalLbRulesForService(lb.updateElectedGateway(oldGatway), false);
 
@@ -220,7 +221,8 @@ public class KubernetesExternalLbHandler {
                 return;
             }
 
-            log.trace("processKubernetesExternalLbWorkerChanged with oldworker: {}", oldWorker);
+            log.info("ExternalLbWorkerChanged from oldworker {} to new worker {}",
+                    oldWorker, lb.electedWorker());
 
             setExternalLbRulesForService(lb.updateElectedWorker(oldWorker), false);
 
@@ -317,8 +319,9 @@ public class KubernetesExternalLbHandler {
         }
 
         KubernetesExternalLbInterface externalLbInterface = gateway.kubernetesExternalLbInterface();
-        if (externalLbInterface == null) {
-            log.warn("setDownstreamRules called but externalLbInterface is null. Stop this task.");
+        if (externalLbInterface == null || externalLbInterface.externalLbGwMac() == null) {
+            log.warn("setDownstreamRules called but externalLbInterface is null or " +
+                    "externalLbInterfaceGwMac is null. Stop this task.");
             return;
         }
 

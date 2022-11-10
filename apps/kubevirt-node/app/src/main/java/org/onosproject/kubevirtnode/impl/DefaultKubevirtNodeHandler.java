@@ -1070,12 +1070,18 @@ public class DefaultKubevirtNodeHandler implements KubevirtNodeHandler {
                 node.phyIntfs().stream()
                         .filter(pi -> pi.intf().equals(portName))
                         .findAny()
-                        .ifPresent(pi -> setState(node, INCOMPLETE));
+                        .ifPresent(pi -> {
+                            log.info("Interface {} is down so set node {}'s state to INCOMPLETE",
+                                    pi.intf(),
+                                    node.hostname());
+                            setState(node, INCOMPLETE);
+                        });
             }
 
             //When the physical port up again, we set the node state to INIT
             //so that respective handlers do their related jobs.
-            if (node.state() == INCOMPLETE && node.type().equals(GATEWAY) && port.isEnabled()) {
+            if ((node.state() == INCOMPLETE || node.state() == DEVICE_CREATED)
+                    && node.type().equals(GATEWAY) && port.isEnabled()) {
                 node.phyIntfs().stream()
                         .filter(pi -> pi.intf().equals(portName))
                         .findAny()

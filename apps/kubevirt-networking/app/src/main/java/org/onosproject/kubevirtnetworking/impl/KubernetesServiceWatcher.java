@@ -18,14 +18,12 @@ package org.onosproject.kubevirtnetworking.impl;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.LoadBalancerIngress;
 import io.fabric8.kubernetes.api.model.LoadBalancerStatus;
 import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.WatcherException;
-import io.fabric8.kubernetes.client.dsl.Resource;
 import org.onlab.packet.IpAddress;
 import org.onlab.packet.MacAddress;
 import org.onosproject.cluster.ClusterService;
@@ -57,7 +55,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.slf4j.Logger;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -308,7 +305,12 @@ public class KubernetesServiceWatcher {
         KubernetesClient client = k8sClient(apiConfigService);
 
         client.services().inNamespace(DEFAULT).list()
-                .getItems().forEach(this::addOrUpdateExternalLoadBalancer);
+                .getItems().forEach(service -> {
+                    if (addOrUpdateExternalLoadBalancer(service) &&
+                            !isLoadBalancerStatusAlreadySet(service)) {
+                        serviceStatusUpdate(service);
+                    }
+                });
     }
 
     private boolean addOrUpdateExternalLoadBalancer(Service service) {
@@ -431,7 +433,7 @@ public class KubernetesServiceWatcher {
             endpointSet.add(workerNode.dataIp().toString());
         });
 
-        String loadbalancerGatewayIp = loadBalancerGatewayIp();
+        IpAddress loadbalancerGatewayIp = loadBalancerGatewayIp();
 
         if (loadbalancerGatewayIp == null) {
             log.error("Can't find the loadbalancer gateway ip in the kubevip configmap.." +
@@ -451,28 +453,19 @@ public class KubernetesServiceWatcher {
                 .loadBalancerIp(IpAddress.valueOf(lbIp))
                 .servicePorts(servicePorts)
                 .endpointSet(endpointSet)
-                .loadBalancerGwIp(IpAddress.valueOf(loadbalancerGatewayIp))
+                .loadBalancerGwIp(loadbalancerGatewayIp)
                 .loadBalancerGwMac(loadBalancerGatewayMac)
                 .build();
     }
 
-    private String loadBalancerGatewayIp() {
-        KubernetesClient client = k8sClient(apiConfigService);
+    private IpAddress loadBalancerGatewayIp() {
+        KubernetesExternalLbConfig config = lbConfigService.lbConfigs().stream().findAny().orElse(null);
 
-        Resource<ConfigMap> kubeVipConfigMapResource =
-                client.configMaps().inNamespace(KUBE_SYSTEM).withName(KUBE_VIP);
-
-        if (kubeVipConfigMapResource == null) {
+        if (config == null) {
             return null;
         }
 
-        Map<String, String> kubeVipConfigMap = kubeVipConfigMapResource.get().getData();
-
-        if (!kubeVipConfigMap.containsKey(GATEWAY_IP)) {
-            return null;
-        }
-
-        return kubeVipConfigMap.get(GATEWAY_IP);
+        return config.loadBalancerGwIp();
     }
 
     private MacAddress loadBalancerGatewayMac() {
