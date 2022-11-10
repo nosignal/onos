@@ -48,9 +48,11 @@ public class KubernetesExternalLbInterfaceCodec extends JsonCodec<KubernetesExte
         ObjectNode result = context.mapper().createObjectNode()
                 .put(ELB_BRIDGE_NAME, externalLbInterface.externalLbBridgeName())
                 .put(ELB_IP, externalLbInterface.externalLbIp().toString())
-                .put(ELB_GW_IP, externalLbInterface.externalLbGwIp().toString())
-                .put(ELB_GW_MAC, externalLbInterface.externalLbGwMac().toString());
+                .put(ELB_GW_IP, externalLbInterface.externalLbGwIp().toString());
 
+        if (externalLbInterface.externalLbGwMac() != null) {
+            result.put(ELB_GW_MAC, externalLbInterface.externalLbGwMac().toString());
+        }
         return result;
     }
 
@@ -69,16 +71,16 @@ public class KubernetesExternalLbInterfaceCodec extends JsonCodec<KubernetesExte
         String elbGwIp = nullIsIllegal(json.get(ELB_GW_IP).asText(),
                 ELB_GW_IP + MISSING_MESSAGE);
 
-        String elbGwMac = nullIsIllegal(json.get(ELB_GW_MAC).asText(),
-                ELB_GW_MAC + MISSING_MESSAGE);
-
-        KubernetesExternalLbInterface externalLbInterface = DefaultKubernetesExternalLbInterface.builder()
+        KubernetesExternalLbInterface.Builder externalLbInterfaceBuilder = DefaultKubernetesExternalLbInterface
+                .builder()
                 .externalLbBridgeName(elbBridgeName)
                 .externallbGwIp(IpAddress.valueOf(elbGwIp))
-                .externalLbIp(IpAddress.valueOf(elbIp))
-                .externalLbGwMac(MacAddress.valueOf(elbGwMac))
-                .build();
+                .externalLbIp(IpAddress.valueOf(elbIp));
 
-        return externalLbInterface;
+        if (json.get(ELB_GW_MAC) != null) {
+            externalLbInterfaceBuilder.externalLbGwMac(MacAddress.valueOf(json.get(ELB_GW_MAC).asText()));
+        }
+
+        return externalLbInterfaceBuilder.build();
     }
 }

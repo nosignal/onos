@@ -542,7 +542,8 @@ public final class KubevirtNetworkingUtil {
         if (numOfGateways == 0) {
             return null;
         }
-        return (KubevirtNode) nodeService.completeNodes(GATEWAY).toArray()[router.hashCode() % numOfGateways];
+        return (KubevirtNode) nodeService.completeNodes(GATEWAY)
+                .toArray()[Math.floorMod(router.hashCode(), numOfGateways)];
     }
 
     /**
@@ -557,14 +558,18 @@ public final class KubevirtNetworkingUtil {
     public static KubevirtNode gatewayNodeForSpecifiedService(KubevirtNodeService nodeService,
                                                               KubernetesExternalLb externalLb) {
         //TODO: enhance election logic for a better load balancing
+        try {
+            int numOfGateways = nodeService.completeExternalLbGatewayNodes().size();
+            if (numOfGateways == 0) {
+                return null;
+            }
 
-        int numOfGateways = nodeService.completeExternalLbGatewayNodes().size();
-        if (numOfGateways == 0) {
+            return (KubevirtNode) nodeService.completeExternalLbGatewayNodes()
+                    .toArray()[Math.floorMod(externalLb.hashCode(), numOfGateways)];
+        } catch (IndexOutOfBoundsException e) {
+            log.error("IndexOutOfBoundsException occurred {}", e.toString());
             return null;
         }
-
-        return (KubevirtNode) nodeService.completeExternalLbGatewayNodes()
-                .toArray()[externalLb.hashCode() % numOfGateways];
     }
 
     /**
