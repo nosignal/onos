@@ -233,15 +233,10 @@ public class KubernetesServiceWatcher {
         public void eventReceived(Action action, Service service) {
             switch (action) {
                 case ADDED:
-                    log.info("Service event ADDED received ");
-                    eventExecutor.execute(() -> processAddOrMod(service));
-                    break;
                 case MODIFIED:
-                    log.info("Service event MODIFIED received");
                     eventExecutor.execute(() -> processAddOrMod(service));
                     break;
                 case DELETED:
-                    log.info("Service event DELETED received");
                     eventExecutor.execute(() -> processDeletion(service));
                     break;
                 case ERROR:
@@ -262,9 +257,11 @@ public class KubernetesServiceWatcher {
         }
 
         private void processAddOrMod(Service service) {
-            if (service == null || !isMaster()) {
+            if (service == null || !isMaster() || !isLoadBalancerType(service)) {
                 return;
             }
+
+            log.info("Service event ADDED or MODIFIED received");
 
             KubernetesExternalLbConfig config = lbConfigService.lbConfigs().stream().findAny().orElse(null);
 
@@ -284,11 +281,13 @@ public class KubernetesServiceWatcher {
         }
 
         private void processDeletion(Service service) {
-            if (service == null || !isMaster()) {
+            if (service == null || !isMaster() || !isLoadBalancerType(service)) {
                 return;
             }
-            if (isLoadBalancerType(service) &&
-                    isKubeVipCloudProviderLabelIsSet(service)) {
+
+            log.info("Service event DELETED received");
+
+            if (isKubeVipCloudProviderLabelIsSet(service)) {
                 KubernetesExternalLb lb = adminService.loadBalancer(service.getMetadata().getName());
 
                 if (lb == null) {
