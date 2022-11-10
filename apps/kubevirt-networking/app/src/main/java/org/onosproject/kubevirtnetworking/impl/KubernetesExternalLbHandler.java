@@ -188,7 +188,7 @@ public class KubernetesExternalLbHandler {
                 return;
             }
 
-            log.info("processKubernetesExternalLbCreatedOrUpdated and updated elb with elecedGateway: {}", lb);
+            log.trace("processKubernetesExternalLbCreatedOrUpdated and updated elb with elecedGateway: {}", lb);
 
             setExternalLbRulesForService(lb, true);
         }
@@ -204,7 +204,7 @@ public class KubernetesExternalLbHandler {
                 return;
             }
 
-            log.info("processKubernetesExternalLbGatewayChanged with oldateway: {}", oldGatway);
+            log.trace("processKubernetesExternalLbGatewayChanged with oldateway: {}", oldGatway);
 
             setExternalLbRulesForService(lb.updateElectedGateway(oldGatway), false);
 
@@ -220,7 +220,7 @@ public class KubernetesExternalLbHandler {
                 return;
             }
 
-            log.info("processKubernetesExternalLbWorkerChanged with oldworker: {}", oldWorker);
+            log.trace("processKubernetesExternalLbWorkerChanged with oldworker: {}", oldWorker);
 
             setExternalLbRulesForService(lb.updateElectedWorker(oldWorker), false);
 
