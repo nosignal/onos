@@ -83,6 +83,7 @@ public final class KubevirtNodeUtil {
     private static final String ZERO = "0";
     private static final String INTERNAL_IP = "InternalIP";
     private static final String K8S_ROLE = "node-role.kubernetes.io";
+    private static final String CONTROL_PLANE = "control-plane";
     private static final String PHYSNET_CONFIG_KEY = SONA_PROJECT_DOMAIN + "/physnet-config";
     private static final String DATA_IP_KEY = SONA_PROJECT_DOMAIN + "/data-ip";
     private static final String GATEWAY_CONFIG_KEY = SONA_PROJECT_DOMAIN + "/gateway-config";
@@ -340,7 +341,7 @@ public final class KubevirtNodeUtil {
 
         for (String roleStr : rolesFull) {
             String role = roleStr.split("/")[1];
-            if (MASTER.name().equalsIgnoreCase(role)) {
+            if (CONTROL_PLANE.equalsIgnoreCase(role) || MASTER.name().equalsIgnoreCase(role)) {
                 nodeType = MASTER;
                 break;
             }
@@ -381,7 +382,7 @@ public final class KubevirtNodeUtil {
 
         for (String roleStr : rolesFull) {
             String role = roleStr.split("/")[1];
-            if (MASTER.name().equalsIgnoreCase(role)) {
+            if (CONTROL_PLANE.equalsIgnoreCase(role) || MASTER.name().equalsIgnoreCase(role)) {
                 nodeType = MASTER;
                 break;
             }
