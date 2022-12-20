@@ -165,10 +165,10 @@ public class KubernetesConfigMapWatcher {
 
         @Override
         public void onClose(WatcherException e) {
-            // due to the bugs in fabric8, pod watcher might be closed,
-            // we will re-instantiate the pod watcher in this case
+            // due to the bugs in fabric8, configmap watcher might be closed,
+            // we will re-instantiate the configmap watcher in this case
             // FIXME: https://github.com/fabric8io/kubernetes-client/issues/2135
-            log.warn("Configmap watcher OnClose, re-instantiate the POD watcher...");
+            log.info("Configmap watcher OnClose, re-instantiate the configmap watcher...");
             instantiateWatcher();
         }
 
@@ -217,7 +217,9 @@ public class KubernetesConfigMapWatcher {
         }
 
         private KubernetesExternalLbConfig parseKubernetesExternalLbConfig(ConfigMap configMap, String configName) {
-            if (configMap.getData().get(GATEWAY_IP) == null || configMap.getData().get(RANGE_GLOBAL) == null) {
+
+            if (configMap == null || configMap.getData() == null ||
+                    configMap.getData().get(GATEWAY_IP) == null || configMap.getData().get(RANGE_GLOBAL) == null) {
                 return null;
             }
 
