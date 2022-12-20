@@ -190,7 +190,10 @@ public class KubevirtVmiWatcher {
 
         @Override
         public void onClose(WatcherException e) {
-            log.warn("VM watcher OnClose, re-instantiate the VM watcher...");
+            // due to the bugs in fabric8, the watcher might be closed,
+            // we will re-instantiate the watcher in this case
+            // FIXME: https://github.com/fabric8io/kubernetes-client/issues/2135
+            log.info("VMI watcher OnClose, re-instantiate the VMI watcher...");
             instantiateWatcher();
         }
 

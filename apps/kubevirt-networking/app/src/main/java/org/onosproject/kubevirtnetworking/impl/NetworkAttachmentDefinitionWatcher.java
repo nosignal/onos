@@ -183,7 +183,7 @@ public class NetworkAttachmentDefinitionWatcher {
             // due to the bugs in fabric8, the watcher might be closed,
             // we will re-instantiate the watcher in this case
             // FIXME: https://github.com/fabric8io/kubernetes-client/issues/2135
-            log.warn("Network-attachment-definition watcher OnClose, re-instantiate the watcher...");
+            log.info("Network-attachment-definition watcher OnClose, re-instantiate the watcher...");
 
             instantiateWatcher();
         }

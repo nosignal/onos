@@ -246,10 +246,10 @@ public class KubernetesServiceWatcher {
 
         @Override
         public void onClose(WatcherException e) {
-            // due to the bugs in fabric8, pod watcher might be closed,
-            // we will re-instantiate the pod watcher in this case
+            // due to the bugs in fabric8, service watcher might be closed,
+            // we will re-instantiate the service watcher in this case
             // FIXME: https://github.com/fabric8io/kubernetes-client/issues/2135
-            log.warn("Service watcher OnClose, re-instantiate the POD watcher...");
+            log.info("Service watcher OnClose, re-instantiate the Service watcher...");
             instantiateWatcher();
         }
 
