@@ -221,6 +221,7 @@ APP_MAP = {
     "//apps/mfwd:onos-apps-mfwd-oar": [],
     "//apps/mlb:onos-apps-mlb-oar": ["sdfabric"],
     "//apps/mobility:onos-apps-mobility-oar": [],
+    "//apps/netflow:onos-apps-netflow-oar": [],
     "//apps/network-troubleshoot:onos-apps-network-troubleshoot-oar": [],
     "//apps/newoptical:onos-apps-newoptical-oar": [],
     "//apps/nodemetrics:onos-apps-nodemetrics-oar": [],
