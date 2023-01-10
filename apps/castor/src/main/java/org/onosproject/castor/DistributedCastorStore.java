@@ -157,6 +157,11 @@ public class DistributedCastorStore implements CastorStore {
     }
 
     @Override
+    public MacAddress getMacAddress(IpAddress ip) {
+        return Versioned.valueOrNull(addressMap.get(ip));
+    }
+
+    @Override
     public void setAddressMap(IpAddress ip, MacAddress mac) {
         addressMap.put(ip, mac);
     }

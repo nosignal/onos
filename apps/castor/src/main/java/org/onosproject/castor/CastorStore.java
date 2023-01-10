@@ -78,6 +78,17 @@ public interface CastorStore {
      */
     Map<IpAddress, MacAddress> getAddressMap();
 
+
+    /**
+     * Get MacAddress from addressMap. Returns null if `ip` is
+     * not found.
+     *
+     * @param ip IP Address
+     *
+     * @return Corresponding MacAddress or null
+     */
+    MacAddress getMacAddress(IpAddress ip);
+
     /**
      * Sets the mapping from IP address to Mac.
      *

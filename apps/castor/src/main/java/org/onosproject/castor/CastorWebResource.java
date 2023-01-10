@@ -82,8 +82,8 @@ public class CastorWebResource  extends AbstractWebResource {
             ObjectMapper mapper = new ObjectMapper();
             Peer peer = mapper.readValue(incomingData, Peer.class);
             get(ConnectivityManagerService.class).setUpConnectivity(peer);
-            if ((get(CastorStore.class)).getAddressMap()
-                    .get(IpAddress.valueOf(peer.getIpAddress())) != null) {
+            if ((get(CastorStore.class))
+                    .getMacAddress(IpAddress.valueOf(peer.getIpAddress())) != null) {
                 get(ConnectivityManagerService.class).setUpL2(peer);
             } else {
                 get(ArpService.class).createArp(peer);

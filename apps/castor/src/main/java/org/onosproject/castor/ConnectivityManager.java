@@ -330,7 +330,7 @@ public class ConnectivityManager implements ConnectivityManagerService {
             }
         }
         TrafficSelector.Builder selector = DefaultTrafficSelector.builder();
-        MacAddress macAddress = castorStore.getAddressMap().get(IpAddress.valueOf(peer.getIpAddress()));
+        MacAddress macAddress = castorStore.getMacAddress(IpAddress.valueOf(peer.getIpAddress()));
         selector.matchEthDst(macAddress);
         TrafficTreatment treatment = DefaultTrafficTreatment.emptyTreatment();
         Key key = Key.of(peer.getIpAddress(), appId);

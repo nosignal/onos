@@ -244,7 +244,7 @@ public class CastorArpManager implements ArpService  {
      */
     private void updateMac(MessageContext context) {
 
-        if ((castorStore.getAddressMap()).containsKey(context.sender())) {
+        if (castorStore.getMacAddress(context.sender) != null) {
             return;
         }
         Ethernet eth = context.packet();
