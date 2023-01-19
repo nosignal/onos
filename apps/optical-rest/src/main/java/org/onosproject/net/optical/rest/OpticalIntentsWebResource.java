@@ -32,6 +32,7 @@ import org.onosproject.net.DefaultPath;
 import org.onosproject.net.ConnectPoint;
 import org.onosproject.net.OchSignal;
 import org.onosproject.net.DeviceId;
+import org.onosproject.net.Port;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.flow.criteria.Criterion;
 import org.onosproject.net.flow.criteria.OchSignalCriterion;
@@ -74,7 +75,7 @@ import static org.onlab.util.Tools.readTreeFromStream;
 
 
 /**
- * Query, submit and withdraw optical network intents.
+ * Query, submit and withdraw optical intents.
  */
 @Path("intents")
 public class OpticalIntentsWebResource extends AbstractWebResource {
@@ -317,10 +318,9 @@ public class OpticalIntentsWebResource extends AbstractWebResource {
                     listLinks.add(link);
                 }
 
-                if ((!listLinks.get(0).src().deviceId().equals(ingress.deviceId())) ||
-                        (!listLinks.get(0).src().port().equals(ingress.port())) ||
-                        (!listLinks.get(listLinks.size() - 1).dst().deviceId().equals(egress.deviceId())) ||
-                        (!listLinks.get(listLinks.size() - 1).dst().port().equals(egress.port()))) {
+                if ((!listLinks.get(0).src().deviceId().equals(ingress.deviceId()))
+                        || (!listLinks.get(listLinks.size() - 1).dst().deviceId().equals(egress.deviceId()))
+                ) {
                     throw new IllegalArgumentException(
                             "Suggested path not compatible with ingress or egress connect points");
                 }
@@ -331,6 +331,12 @@ public class OpticalIntentsWebResource extends AbstractWebResource {
                 }
 
                 suggestedPath = new DefaultPath(PROVIDER_ID, listLinks, new ScalarWeight(1));
+
+                if (!deviceService.getPort(suggestedPath.src()).type().equals(Port.Type.OCH)
+                || !deviceService.getPort(suggestedPath.dst()).type().equals(Port.Type.OCH)) {
+                    throw new IllegalArgumentException(
+                            "End-points of suggested path must be ports of type OCH");
+                }
 
                 log.debug("OpticalIntent along suggestedPath {}", suggestedPath);
             }
