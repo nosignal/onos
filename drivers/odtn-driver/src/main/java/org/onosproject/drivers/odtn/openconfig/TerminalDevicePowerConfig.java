@@ -546,6 +546,7 @@ public class TerminalDevicePowerConfig<T> extends AbstractHandlerBehaviour imple
                     // This is an edit-config operation.
                     sb.append(pc.parsePortRequestRpc(power, name));
                 }
+                sb.append("<component>").append("<name>").append(name).append("</name>");
                 sb.append("</component>").append("</components>");
                 return sb.toString();
             } else {
