@@ -23,7 +23,7 @@ import org.onosproject.drivers.odtn.openconfig.TerminalDevicePowerConfig;
 import org.onosproject.net.PortNumber;
 import org.onosproject.net.behaviour.PowerConfig;
 import org.slf4j.Logger;
-
+import org.onosproject.netconf.DatastoreId;
 import java.util.Optional;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -44,17 +44,23 @@ public class AdvaTerminalDevicePowerConfig<T>
      */
     @Override
     public Optional<Range<Double>> getTargetPowerRange(PortNumber port, Object component) {
-        double targetMin = -30;
-        double targetMax = 1;
+        double targetMin = -6;
+        double targetMax = 4;
         return Optional.of(Range.open(targetMin, targetMax));
     }
 
     @Override
     public Optional<Range<Double>> getInputPowerRange(PortNumber port, Object component) {
-        double targetMin = -30;
-        double targetMax = 1;
+        double targetMin = -6;
+        double targetMax = 4;
         return Optional.of(Range.open(targetMin, targetMax));
     }
+
+    @Override
+      public DatastoreId getDataStoreId() {
+        return DatastoreId.RUNNING;
+    }
+
 
     /**
      * Construct a rpc target power message.
@@ -69,11 +75,9 @@ public class AdvaTerminalDevicePowerConfig<T>
         rpc.append("<component>");
         if (power != null) {
             // This is an edit-config operation.
-            rpc.append("<config>")
-                    .append("<name>")
+                    rpc.append("<name>")
                     .append(name)
                     .append("</name>")
-                    .append("</config>")
                     .append("<optical-channel xmlns=\"http://openconfig.net/yang/terminal-device\">")
                     .append("<config>")
                     .append("<target-output-power>")
@@ -88,4 +92,5 @@ public class AdvaTerminalDevicePowerConfig<T>
         }
         return rpc;
     }
+
 }

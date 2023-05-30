@@ -60,6 +60,7 @@ public class TerminalDeviceModulationConfig<T> extends AbstractHandlerBehaviour 
 
 
     public enum BitRate {
+        GBPS_300(300),       //300 Gbps
         GBPS_200(200),      // 200 Gbps
         GBPS_100(100),        // 100 Gbps
         GBPS_40(40),          // 40 Gbps

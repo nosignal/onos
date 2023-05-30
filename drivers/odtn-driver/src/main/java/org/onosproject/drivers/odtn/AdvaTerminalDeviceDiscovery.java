@@ -26,6 +26,7 @@ import org.onlab.packet.ChassisId;
 import org.onosproject.drivers.utilities.XmlConfigParser;
 import org.onosproject.net.ChannelSpacing;
 import org.onosproject.net.DefaultAnnotations;
+import org.onosproject.net.AnnotationKeys;
 import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.OchSignal;
@@ -60,7 +61,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Driver Implementation of the DeviceDescrption discovery for OpenConfig
- * terminal devices.
+ * ADVA FSP3000C platform terminal devices.
  *
  */
 public class AdvaTerminalDeviceDiscovery
@@ -147,7 +148,7 @@ public class AdvaTerminalDeviceDiscovery
                                             Device.Type.TERMINAL_DEVICE,
                                             "ADVA",
                                             "FSP3000C",
-                                            "3.1",
+                                            "4.5.2",
                                             "",
                                             new ChassisId("1"));
     }
@@ -282,6 +283,7 @@ public class AdvaTerminalDeviceDiscovery
              annotations.putIfAbsent(PORT_TYPE, OdtnPortType.CLIENT.value());
              annotations.putIfAbsent(ONOS_PORT_INDEX, portNum.toString());
              annotations.putIfAbsent(CONNECTION_ID, connectionId);
+             annotations.putIfAbsent(AnnotationKeys.PORT_NAME, description);
 
              builder.withPortNumber(PortNumber.portNumber(portNum));
              builder.type(Type.PACKET);
@@ -300,6 +302,7 @@ public class AdvaTerminalDeviceDiscovery
              annotations.putIfAbsent(ONOS_PORT_INDEX, portNum.toString());
              annotations.putIfAbsent(CONNECTION_ID, connectionId);
              annotations.put(OdtnDeviceDescriptionDiscovery.OC_NAME, "optch " + description);
+             annotations.putIfAbsent(AnnotationKeys.PORT_NAME, "optch " + description);
 
              OchSignal signalId = OchSignal.newDwdmSlot(ChannelSpacing.CHL_50GHZ, 1);
              return OchPortHelper.ochPortDescription(

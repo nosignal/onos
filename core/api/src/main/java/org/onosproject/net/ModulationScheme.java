@@ -21,6 +21,7 @@ public enum ModulationScheme {
 
     DP_QPSK,
     DP_8QAM,
-    DP_16QAM
+    DP_16QAM,
+    DP_16QAM_HYBRID
 
 }

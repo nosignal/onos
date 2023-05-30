@@ -246,7 +246,7 @@
     <behaviour api="org.onosproject.net.behaviour.PowerConfig"
 	       impl="org.onosproject.drivers.odtn.AdvaTerminalDevicePowerConfig"/>
     <behaviour api="org.onosproject.net.behaviour.ModulationConfig"
-               impl="org.onosproject.drivers.odtn.CassiniModulationOpenConfig"/>
+               impl="org.onosproject.drivers.odtn.AdvaModulationOpenConfig"/>
     </driver>
 
     <driver name="gnmi-openconfig-terminal-device" manufacturer="OpenConfig" hwVersion="Unknown" swVersion="gNMI">

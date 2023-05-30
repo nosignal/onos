@@ -44,9 +44,7 @@ public class AdvaFlowRuleProgrammable
         sb.append(
                     "<components xmlns='http://openconfig.net/yang/platform'>"
                   + "<component>"
-                  + "<config>"
                   + "<name>" + optChannel + "</name>"
-                  + "</config>"
                   + "<optical-channel xmlns='http://openconfig.net/yang/terminal-device'>"
                   + "<config>"
                   + "<frequency>" + (long) freq.asMHz() + "</frequency>"

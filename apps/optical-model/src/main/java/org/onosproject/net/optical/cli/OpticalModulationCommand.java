@@ -59,7 +59,7 @@ public class OpticalModulationCommand extends AbstractShellCommand {
     @Completion(OpticalConnectPointCompleter.class)
     private String connectPoint = null;
 
-    @Argument(index = 2, name = "value", description = "example: dp_qpsk, dp_8qam, dp_16qam",
+    @Argument(index = 2, name = "value", description = "example: dp_qpsk, dp_8qam, dp_16qam, dp_16qam_hybrid",
             required = false, multiValued = false)
     private String value = null;
 
@@ -98,9 +98,15 @@ public class OpticalModulationCommand extends AbstractShellCommand {
                 long bitRate = 0;
                 if (value.equalsIgnoreCase(ModulationScheme.DP_QPSK.name())) {
                     bitRate = 100;
-                } else {
+                } else if (value.equalsIgnoreCase(ModulationScheme.DP_16QAM.name())) {
                     bitRate = 200;
+                } else if (value.equalsIgnoreCase(ModulationScheme.DP_16QAM_HYBRID.name())) {
+                    bitRate = 300;
+                } else {
+                    print(value + "is not correct setting for modulation");
+                    return;
                 }
+
                 checkNotNull(value);
                 Direction component = Direction.ALL;
                 modulationConfig.setModulationScheme(cp.port(), component, bitRate);
