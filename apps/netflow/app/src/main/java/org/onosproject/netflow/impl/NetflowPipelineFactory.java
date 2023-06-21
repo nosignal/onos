@@ -18,18 +18,23 @@ package org.onosproject.netflow.impl;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
-
+import org.onosproject.netflow.NetflowController;
 
 /**
  * Creates a ChannelPipeline for a server-side netflow message channel.
  */
 public class NetflowPipelineFactory implements ChannelPipelineFactory {
 
+    private NetflowController controller;
+
     /**
      * Constructor to initialize the values.
+     *
+     * @param controller netflow controller.
      */
-    public NetflowPipelineFactory() {
+    public NetflowPipelineFactory(NetflowController controller) {
         super();
+        this.controller = controller;
     }
 
     /**
@@ -40,7 +45,7 @@ public class NetflowPipelineFactory implements ChannelPipelineFactory {
      */
     @Override
     public ChannelPipeline getPipeline() throws Exception {
-        NeflowChannelHandler handler = new NeflowChannelHandler();
+        NeflowChannelHandler handler = new NeflowChannelHandler(controller);
 
         ChannelPipeline pipeline = Channels.pipeline();
         pipeline.addLast("netflowmessagedecoder", new NetflowMessageDecoder());

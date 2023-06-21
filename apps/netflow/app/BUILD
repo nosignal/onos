@@ -1,4 +1,4 @@
-COMPILE_DEPS = CORE_DEPS + [
+COMPILE_DEPS = CORE_DEPS + KRYO + CLI + [
     "//core/store/serializers:onos-core-serializers",
     "//apps/netflow/api:onos-apps-netflow-api",
     "@io_netty_netty_common//jar",
@@ -6,5 +6,6 @@ COMPILE_DEPS = CORE_DEPS + [
 ]
 
 osgi_jar(
+    karaf_command_packages = ["org.onosproject.netflow.cli"],
     deps = COMPILE_DEPS,
 )

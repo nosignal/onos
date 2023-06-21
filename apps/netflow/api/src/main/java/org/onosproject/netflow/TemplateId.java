@@ -15,7 +15,7 @@
  */
 package org.onosproject.netflow;
 
-import com.google.common.base.MoreObjects;
+import org.onlab.util.Identifier;
 
 /**
  * Template Records is given a unique Template ID.
@@ -26,23 +26,34 @@ import com.google.common.base.MoreObjects;
  * FlowSets are numbered from 256 to 65535.
  * Ref: https://www.ietf.org/rfc/rfc3954.txt
  */
-public class TemplateId {
+public class TemplateId extends Identifier<Integer> {
 
-    private int id;
-
+    /**
+     * Default constructor.
+     *
+     * @param id template id.
+     */
     public TemplateId(int id) {
-        this.id = id;
+        super(id);
     }
 
+    /**
+     * Get the value of the template id.
+     *
+     * @return the value of the template id.
+     */
     public int getId() {
-        return id;
+        return identifier;
     }
 
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(getClass())
-                .add("id", id)
-                .toString();
+    /**
+     * Get the value of the templateid object.
+     *
+     * @param id template id.
+     * @return the value of the templateid object.
+     */
+    public static TemplateId valueOf(int id) {
+        return new TemplateId(id);
     }
 
 }

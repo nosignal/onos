@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onosproject.netflow.impl;
+package org.onosproject.netflow;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
@@ -24,12 +24,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.google.common.base.MoreObjects;
-
-import org.onosproject.netflow.DataRecord;
-import org.onosproject.netflow.TemplateId;
-import org.onosproject.netflow.Flow;
-import org.onosproject.netflow.FlowTemplateField;
-import org.onosproject.netflow.DataDeserializer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -118,7 +112,7 @@ public class DataFlowRecord extends DataRecord {
     public String toString() {
         return MoreObjects.toStringHelper(getClass())
                 .add("templateId", templateId)
-                .add("flows", flows)
+                .add("\n\nflows", flows)
                 .toString();
     }
 

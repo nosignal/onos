@@ -42,7 +42,7 @@ public class NetflowMessageDecoder extends FrameDecoder {
                 return NetFlowPacket.deserializer().deserialize(bytes, 0, bytes.length);
             }
         } catch (Exception e) {
-            log.error("Netflow message decode error");
+            log.error("Netflow message decode error ", e);
             buffer.resetReaderIndex();
             buffer.discardReadBytes();
 

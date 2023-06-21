@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onosproject.netflow.impl;
+package org.onosproject.netflow;
 
 import java.util.List;
 
@@ -53,6 +53,8 @@ public class OptionalTemplateFlowSet extends FlowSet {
 
     private int length;
 
+    private TemplateId templateId;
+
     private List<DataTemplateRecord> records;
 
     /**
@@ -87,6 +89,20 @@ public class OptionalTemplateFlowSet extends FlowSet {
      */
     public int getLength() {
         return length;
+    }
+
+    /**
+     * Returns template record's template id.
+     * Template Records is given a unique Template ID.
+     * This uniqueness is local to the Observation
+     * Domain that generated the Template ID.  Template IDs 0-255 are
+     * reserved for Template FlowSets, Options FlowSets, and other
+     * reserved FlowSets yet to be created.
+     *
+     * @return list of flowsets
+     */
+    public TemplateId getTemplateId() {
+        return templateId;
     }
 
     /**

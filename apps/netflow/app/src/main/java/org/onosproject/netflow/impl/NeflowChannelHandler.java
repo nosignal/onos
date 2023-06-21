@@ -15,6 +15,7 @@
  */
 package org.onosproject.netflow.impl;
 
+import java.util.Optional;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ExceptionEvent;
@@ -22,18 +23,35 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.SimpleChannelHandler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.onosproject.netflow.DataTemplateRecord;
+import org.onosproject.netflow.FlowSet;
+import org.onosproject.netflow.TemplateFlowSet;
+import org.onosproject.netflow.DataFlowSet;
+import org.onosproject.netflow.TemplateId;
+import org.onosproject.netflow.NetflowController;
+
 /**
  * Channel handler deals with the netfow exporter connection and dispatches messages
  * from netfow exporter to the appropriate locations.
  */
 public class NeflowChannelHandler extends SimpleChannelHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(NeflowChannelHandler.class);
+
     private Channel channel;
+
+    private NetflowController controller;
 
     /**
      * Create a new netflow channelHandler instance.
+     *
+     * @param controller netflow controller.
      */
-    NeflowChannelHandler() {
+    NeflowChannelHandler(NetflowController controller) {
+        this.controller = controller;
     }
 
     /**
@@ -81,8 +99,39 @@ public class NeflowChannelHandler extends SimpleChannelHandler {
      */
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent event) throws Exception {
-        //TODO Netflow message store to netflow distributed store
-        NetFlowPacket packet = (NetFlowPacket) event.getMessage();
+        try {
+            NetFlowPacket netFlowPacket = (NetFlowPacket) event.getMessage();
+            netFlowPacket.getFlowSets()
+                    .stream()
+                    .filter(n -> n.getType() == FlowSet.Type.TEMPLATE_FLOWSET)
+                    .map(t -> (TemplateFlowSet) t)
+                    .flatMap(t -> t.getRecords().stream())
+                    .forEach(t -> controller.addTemplateFlowSet(t));
+
+            netFlowPacket.getFlowSets()
+                    .stream()
+                    .filter(n -> n.getType() == FlowSet.Type.DATA_FLOWSET)
+                    .map(t -> (DataFlowSet) t)
+                    .forEach(data -> {
+                        Optional<DataTemplateRecord> template = controller
+                                .getTemplateFlowSet(TemplateId.valueOf(data.getFlowSetId()));
+                        if (!template.isPresent()) {
+                            return;
+                        }
+                        try {
+                            data.dataDeserializer(template.get());
+                            data.getDataFlow()
+                                    .stream()
+                                    .forEach(dataflow -> controller.updateDataFlowSet(dataflow));
+                        } catch (Exception ex) {
+                            log.error("Netflow dataflow deserializer exception ", ex);
+                        }
+                    });
+            log.info("Netflow message received {}", netFlowPacket);
+        } catch (Exception er) {
+            log.error("Netflow message deserializer exception ", er);
+        }
+
     }
 
 }

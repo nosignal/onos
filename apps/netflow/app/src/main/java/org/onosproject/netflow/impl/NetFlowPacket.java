@@ -23,6 +23,7 @@ import java.util.Objects;
 
 import org.onlab.packet.Deserializer;
 import org.onlab.packet.BasePacket;
+import org.onosproject.netflow.FlowSet;
 
 import static com.google.common.base.Preconditions.checkState;
 

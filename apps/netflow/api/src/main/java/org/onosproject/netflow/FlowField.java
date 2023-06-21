@@ -18,18 +18,24 @@ package org.onosproject.netflow;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import static org.onosproject.netflow.NetflowUtils.VAR_INT_LONG;
 import static org.onosproject.netflow.NetflowUtils.VAR_BYTE;
 import static org.onosproject.netflow.NetflowUtils.NULL;
 import static org.onosproject.netflow.NetflowUtils.VAR_SHORT;
-import static org.onosproject.netflow.NetflowUtils.VAR_IP_ADDRESS;
+import static org.onosproject.netflow.NetflowUtils.VAR_IPV4_ADDRESS;
+import static org.onosproject.netflow.NetflowUtils.VAR_IPV6_ADDRESS;
 import static org.onosproject.netflow.NetflowUtils.VAR_SHORT_INT;
 import static org.onosproject.netflow.NetflowUtils.VAR_INT;
 import static org.onosproject.netflow.NetflowUtils.VAR_MAC;
+import static org.onosproject.netflow.NetflowUtils.VAR_UNSIGNED_BYTE;
+import static org.onosproject.netflow.NetflowUtils.VAR_UNSIGNED_INT;
+import static org.onosproject.netflow.NetflowUtils.VAR_UNSIGNED_SHORT;;
 
 /**
  * The flow fields are a selection of Packet Header
@@ -44,34 +50,34 @@ public enum FlowField {
      * https://www.ietf.org/rfc/rfc3954.txt
      * Section :- Field Type Definitions.
      */
-    IN_BYTES(1, VAR_INT_LONG),
-    IN_PKTS(2, VAR_INT_LONG),
+    IN_BYTES(1, VAR_UNSIGNED_INT),
+    IN_PKTS(2, VAR_UNSIGNED_INT),
     FLOWS(3, VAR_INT_LONG),
     PROTOCOL(4, VAR_BYTE),
     SRC_TOS(5, VAR_BYTE),
     TCP_FLAGS(6, VAR_BYTE),
-    L4_SRC_PORT(7, VAR_SHORT),
-    IPV4_SRC_ADDR(8, VAR_IP_ADDRESS),
+    L4_SRC_PORT(7, VAR_UNSIGNED_SHORT),
+    IPV4_SRC_ADDR(8, VAR_IPV4_ADDRESS),
     SRC_MASK(9, VAR_BYTE),
-    INPUT_SNMP(10, VAR_SHORT_INT),
-    L4_DST_PORT(11, VAR_SHORT),
-    IPV4_DST_ADDR(12, VAR_IP_ADDRESS),
+    INPUT_SNMP(10, VAR_UNSIGNED_SHORT),
+    L4_DST_PORT(11, VAR_UNSIGNED_SHORT),
+    IPV4_DST_ADDR(12, VAR_IPV4_ADDRESS),
     DST_MASK(13, VAR_BYTE),
-    OUTPUT_SNMP(14, VAR_SHORT_INT),
-    IPV4_NEXT_HOP(15, VAR_IP_ADDRESS),
+    OUTPUT_SNMP(14, VAR_UNSIGNED_SHORT),
+    IPV4_NEXT_HOP(15, VAR_IPV4_ADDRESS),
     SRC_AS(16, VAR_SHORT_INT),
     DST_AST(17, VAR_SHORT_INT),
-    BGP_IPV4_NEXT_HOP(18, VAR_IP_ADDRESS),
+    BGP_IPV4_NEXT_HOP(18, VAR_IPV4_ADDRESS),
     MUL_DST_PKTS(19, VAR_INT_LONG),
     MUL_DST_BYTES(20, VAR_INT_LONG),
-    LAST_SWITCHED(21, VAR_INT),
-    FIRST_SWITCHED(22, VAR_INT),
+    LAST_SWITCHED(21, VAR_UNSIGNED_INT),
+    FIRST_SWITCHED(22, VAR_UNSIGNED_INT),
     OUT_BYTES(23, VAR_INT_LONG),
     OUT_PKTS(24, VAR_INT_LONG),
     MIN_PKT_LNGTH(25, NULL),
     MAX_PKT_LNGTH(26, NULL),
-    IPV6_SRC_ADDR(27, VAR_IP_ADDRESS),
-    IPV6_DST_ADDR(28, VAR_IP_ADDRESS),
+    IPV6_SRC_ADDR(27, VAR_IPV6_ADDRESS),
+    IPV6_DST_ADDR(28, VAR_IPV6_ADDRESS),
     IPV6_SRC_MASK(29, VAR_BYTE),
     IPV6_DST_MASK(30, VAR_BYTE),
     IPV6_FLOW_LABEL(31, NULL),
@@ -89,7 +95,7 @@ public enum FlowField {
     IPV4_SRC_PREFIX(44, NULL),
     IPV4_DST_PREFIX(45, NULL),
     MPLS_TOP_LABEL_TYPE(46, VAR_BYTE),
-    MPLS_TOP_LABEL_IP_ADDR(47, VAR_IP_ADDRESS),
+    MPLS_TOP_LABEL_IP_ADDR(47, VAR_IPV4_ADDRESS),
     FLOW_SAMPLER_ID(48, VAR_BYTE),
     FLOW_SAMPLER_MODE(49, VAR_BYTE),
     FLOW_SAMPLER_RANDOM_INTERVAL(50, NULL),
@@ -101,10 +107,10 @@ public enum FlowField {
     OUT_DST_MAC(57, VAR_MAC),
     SRC_VLAN(58, VAR_SHORT),
     DST_VLAN(59, VAR_SHORT),
-    IP_PROTOCOL_VERSION(60, VAR_BYTE),
+    IP_PROTOCOL_VERSION(60, VAR_UNSIGNED_BYTE),
     DIRECTION(61, VAR_BYTE),
-    IPV6_NEXT_HOP(62, VAR_IP_ADDRESS),
-    BPG_IPV6_NEXT_HOP(63, VAR_IP_ADDRESS),
+    IPV6_NEXT_HOP(62, VAR_IPV6_ADDRESS),
+    BPG_IPV6_NEXT_HOP(63, VAR_IPV6_ADDRESS),
     IPV6_OPTION_HEADERS(64, VAR_INT),
     MPLS_LABEL_1(70, NULL),
     MPLS_LABEL_2(71, NULL),
@@ -139,6 +145,7 @@ public enum FlowField {
     LAYER2_PACKET_SECTION_SIZE(103, NULL),
     LAYER2_PACKET_SECTION_DATA(104, NULL);
 
+
     final int fieldID;
     final BiFunction<ByteBuffer, Integer, Object> parser;
     private static Map<Integer, FlowField> fields = new ConcurrentHashMap<>();
@@ -156,6 +163,12 @@ public enum FlowField {
         return Optional.of(fieldId)
                 .filter(id -> fields.containsKey(id))
                 .map(id -> fields.get(id));
+    }
+
+    public static Set<String> getAllFlowField() {
+        return fields.values().stream()
+                .map(f -> f.name())
+                .collect(Collectors.toSet());
     }
 
     public BiFunction<ByteBuffer, Integer, Object> getParser() {

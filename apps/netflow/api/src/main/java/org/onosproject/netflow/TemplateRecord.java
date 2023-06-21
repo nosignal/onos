@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onosproject.netflow.impl;
+package org.onosproject.netflow;
 
 import org.onlab.packet.BasePacket;
 
-import org.onosproject.netflow.FlowRecord;
 /**
  * A Template Record defines the structure and interpretation of fields.
  * in a Flow Data Record.

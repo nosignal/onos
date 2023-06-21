@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onosproject.netflow.impl;
+package org.onosproject.netflow;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
@@ -25,8 +25,6 @@ import com.google.common.base.MoreObjects;
 
 import org.onlab.packet.DeserializationException;
 import org.onlab.packet.Deserializer;
-
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * One of the essential elements in the NetFlow format is the Template
@@ -256,21 +254,11 @@ public final class TemplateFlowSet extends FlowSet {
         }
 
         /**
-         * Checks arguments for template flow set.
-         */
-        private void checkArguments() {
-            checkState(flowSetId == 0, "Invalid flow set id.");
-            checkState(length == 0, "Invalid flow set length.");
-
-        }
-
-        /**
          * Builds template flow set.
          *
          * @return template flow set.
          */
         public TemplateFlowSet build() {
-            checkArguments();
             return new TemplateFlowSet(this);
         }
 

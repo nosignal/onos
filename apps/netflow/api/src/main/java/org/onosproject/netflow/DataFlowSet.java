@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onosproject.netflow.impl;
+package org.onosproject.netflow;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
@@ -161,6 +161,7 @@ public final class DataFlowSet extends FlowSet {
                 .add("flowSetId", flowSetId)
                 .add("length", length)
                 .add("data", data)
+                .add("dataFlow", dataFlow)
                 .toString();
     }
 
@@ -206,7 +207,7 @@ public final class DataFlowSet extends FlowSet {
             byte[] dataRecord = new byte[template.getValueLength()];
             bb.get(dataRecord);
             this.setDataFlow(DataFlowRecord.deserializer().deserialize(
-                    data, 0, template.getValueLength(), template));
+                    dataRecord, 0, template.getValueLength(), template));
         }
 
     }

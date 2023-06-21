@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onosproject.netflow.impl;
+package org.onosproject.netflow;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
@@ -28,8 +28,6 @@ import java.util.stream.IntStream;
 import com.google.common.base.MoreObjects;
 
 import org.onlab.packet.Deserializer;
-import org.onosproject.netflow.TemplateId;
-import org.onosproject.netflow.FlowTemplateField;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -115,6 +113,37 @@ public final class DataTemplateRecord extends TemplateRecord {
                 .add("filedCount", filedCount)
                 .add("fields", fields)
                 .toString();
+    }
+
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 79 * hash + Objects.hashCode(this.templateId);
+        hash = 79 * hash + this.filedCount;
+        hash = 79 * hash + Objects.hashCode(this.fields);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final DataTemplateRecord other = (DataTemplateRecord) obj;
+        if (this.filedCount != other.filedCount) {
+            return false;
+        }
+        if (!Objects.equals(this.templateId, other.templateId)) {
+            return false;
+        }
+        return Objects.equals(this.fields, other.fields);
     }
 
     /**
