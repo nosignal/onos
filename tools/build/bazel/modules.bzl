@@ -187,6 +187,7 @@ APP_JAR_MAP = {
 
 APP_MAP = {
     "//apps/acl:onos-apps-acl-oar": [],
+    "//apps/aiplugin:onos-apps-aiplugin-oar": [],
     "//apps/artemis:onos-apps-artemis-oar": [],
     "//apps/bgprouter:onos-apps-bgprouter-oar": [],
     "//apps/castor:onos-apps-castor-oar": [],
