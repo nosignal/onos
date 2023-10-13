@@ -77,6 +77,7 @@ public final class KubevirtRouterCodecTest {
                 MacAddress.valueOf("11:22:33:44:55:66"));
 
         KubevirtRouter router = DefaultKubevirtRouter.builder()
+                .id("26fcc876-f39a-459f-801d-75dcd3654ab8")
                 .name("router-1")
                 .enableSnat(true)
                 .mac(MacAddress.valueOf("11:22:33:44:55:66"))
@@ -95,6 +96,7 @@ public final class KubevirtRouterCodecTest {
     public void testKubevirtRouterDecode() throws IOException {
         KubevirtRouter router = getKubevirtRouter("KubevirtRouter.json");
 
+        assertEquals("26fcc876-f39a-459f-801d-75dcd3654ab8", router.id());
         assertEquals("router-1", router.name());
         assertEquals("Example Virtual Router", router.description());
         assertTrue(router.enableSnat());
