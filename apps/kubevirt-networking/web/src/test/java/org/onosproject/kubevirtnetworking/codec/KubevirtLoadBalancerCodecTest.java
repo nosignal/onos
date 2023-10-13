@@ -96,6 +96,7 @@ public final class KubevirtLoadBalancerCodecTest {
     @Test
     public void testKubevirtLoadBalancerEncode() {
         KubevirtLoadBalancer lb = DefaultKubevirtLoadBalancer.builder()
+                .id("26fcc876-f39a-459f-801d-75dcd3654ab8")
                 .name("lb-1")
                 .networkId("net-1")
                 .vip(IpAddress.valueOf("10.10.10.10"))
@@ -116,6 +117,7 @@ public final class KubevirtLoadBalancerCodecTest {
     public void testKubevirtLoadBalancerDecode() throws IOException {
         KubevirtLoadBalancer lb = getKubevirtLoadBalancer("KubevirtLoadBalancer.json");
 
+        assertThat(lb.id(), is("26fcc876-f39a-459f-801d-75dcd3654ab8"));
         assertThat(lb.name(), is("lb-1"));
         assertThat(lb.description(), is("Example Load Balancer"));
         assertThat(lb.networkId(), is("net-1"));
