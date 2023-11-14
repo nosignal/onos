@@ -63,7 +63,7 @@ public final class KubevirtRouterCodec extends JsonCodec<KubevirtRouter> {
 
         ObjectNode result = context.mapper().createObjectNode()
                 .put(ID, router.id())
-                .put(NAME, router.name())
+                .put(NAME, router.id())
                 .put(ENABLE_SNAT, router.enableSnat())
                 .put(MAC_ADDRESS, router.mac().toString());
 
@@ -116,7 +116,7 @@ public final class KubevirtRouterCodec extends JsonCodec<KubevirtRouter> {
         String id = nullIsIllegal(json.get(ID).asText(),
                 ID + MISSING_MESSAGE);
 
-        String name = nullIsIllegal(json.get(NAME).asText(),
+        String name = nullIsIllegal(json.get(ID).asText(),
                 NAME + MISSING_MESSAGE);
 
         String vrouterMac = nullIsIllegal(json.get(MAC_ADDRESS).asText(),
