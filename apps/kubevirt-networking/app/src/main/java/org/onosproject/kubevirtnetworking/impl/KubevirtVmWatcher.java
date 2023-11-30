@@ -289,7 +289,8 @@ public class KubevirtVmWatcher {
                     if (!existing.ipAddress().equals(ip)) {
                         updatedPort = updatedPort.updateIpAddress(ip);
                     }
-                    if (!port.securityGroups().equals(sgs) || !port.ipAddress().equals(ip)) {
+                    if (!existing.securityGroups().equals(sgs) ||
+                            !existing.ipAddress().equals(ip)) {
                         portAdminService.updatePort(updatedPort);
                     }
                 }
