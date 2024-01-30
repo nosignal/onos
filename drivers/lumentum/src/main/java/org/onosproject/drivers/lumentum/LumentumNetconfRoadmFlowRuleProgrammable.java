@@ -25,19 +25,15 @@ import org.onosproject.drivers.odtn.impl.DeviceConnectionCache;
 import org.onosproject.drivers.utilities.XmlConfigParser;
 import org.onosproject.net.PortNumber;
 import org.onosproject.net.OchSignal;
-import org.onosproject.net.OchSignalType;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.ChannelSpacing;
 import org.onosproject.net.GridType;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.driver.AbstractHandlerBehaviour;
 import org.onosproject.net.flow.DefaultFlowEntry;
-import org.onosproject.net.flow.DefaultTrafficSelector;
 import org.onosproject.net.flow.FlowEntry;
 import org.onosproject.net.flow.FlowRule;
 import org.onosproject.net.flow.FlowRuleProgrammable;
-import org.onosproject.net.flow.TrafficSelector;
-import org.onosproject.net.flow.criteria.Criteria;
 import org.onosproject.netconf.NetconfController;
 import org.onosproject.netconf.NetconfException;
 import org.onosproject.netconf.NetconfSession;
@@ -103,7 +99,7 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
                 .collect(Collectors.toList());
 
         //Print out number of rules actually found on the device that are also included in the cache
-        log.debug("Device {} getFlowEntries fetched connections {}", did(), fetched.size());
+        log.info("Device {} getFlowEntries fetched connections {}", did(), fetched.size());
 
         return fetched;
     }
@@ -130,12 +126,13 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
             if (rpcAddConnection(lumFlowRule)) {
                 added.add(lumFlowRule);
                 getConnectionCache().add(did(), lumFlowRule.getConnectionName(), lumFlowRule);
-                log.debug("Adding connection with selector {}", lumFlowRule.selector());
+                log.info("Adding connection with selector {}", lumFlowRule.selector());
+                log.info("Adding connection with name {}", lumFlowRule.getConnectionName());
             }
         }
 
         //Print out number of rules sent to the device (without receiving errors)
-        log.debug("Device {} applyFlowRules added {}", did(), added.size());
+        log.info("Device {} applyFlowRules added {}", did(), added.size());
 
         return added;
     }
@@ -163,7 +160,7 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
         }
 
         //Print out number of removed rules from the device (without receiving errors)
-        log.debug("Device {} removeFlowRules removed {}", did(), removed.size());
+        log.info("Device {} removeFlowRules removed {}", did(), removed.size());
 
         return removed;
     }
@@ -250,42 +247,30 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
             return null;
         }
 
-        log.debug("Lumentum NETCONF - retrieved FlowRule module {} connection {}", moduleId, connId);
+        log.info("Lumentum NETCONF - retrieved FlowRule module {} connection {}", moduleId, connId);
 
         HierarchicalConfiguration config = connection.configurationAt(CONFIG);
         double startFreq = config.getDouble(START_FREQ);
         double endFreq = config.getDouble(END_FREQ);
-        String inputPortReference = config.getString(INPUT_PORT_REFERENCE);
-        String outputPortReference = config.getString(OUTPUT_PORT_REFERENCE);
+        String inputPort = config.getString(INPUT_PORT_REFERENCE);
+        String outputPort = config.getString(OUTPUT_PORT_REFERENCE);
 
         HierarchicalConfiguration state = connection.configurationAt(STATE);
         double attenuation = state.getDouble(CHANNEL_ATTENUATION);
         double inputPower = state.getDouble(CHANNEL_INPUT_POWER);
         double outputPower = state.getDouble(CHANNEL_OUTPUT_POWER);
 
-        PortNumber portNumber = getPortNumber(moduleId, inputPortReference, outputPortReference);
+        OchSignal signal = toOchSignal(startFreq, endFreq);
 
-        //If rule is on module 1 it means input port in the Flow rule is contained in portNumber.
-        //Otherwise the input port in the Flow rule must is the line port.
-        TrafficSelector selector = DefaultTrafficSelector.builder()
-                .matchInPort(moduleId == 1 ? portNumber : LINE_PORT_NUMBER)
-                .add(Criteria.matchOchSignalType(OchSignalType.FIXED_GRID))
-                .add(Criteria.matchLambda(toOchSignal(startFreq, endFreq)))
-                .build();
+        PortNumber portNumber = getPortNumber(moduleId, inputPort, outputPort);
+        double central = signal.centralFrequency().asGHz();
 
-        log.debug("Lumentum NETCONF - retrieved FlowRule startFreq {} endFreq {}", startFreq, endFreq);
-        log.debug("Lumentum NETCONF - retrieved FlowRule selector {}", selector);
+        String connectionName =  "inPort-" + portNumber.toStringWithoutName() + "-centralFreq-" + central;
+        log.info("Lumentum NETCONF - retrieved connection with name {}", connectionName);
+        log.info("Lumentum NETCONF - retrieved connection startFreq {} endFreq {}", startFreq, endFreq);
 
-        //Lookup of connection
-        //Retrieved rules, cached rules are considered equal if the selector is equal
         FlowRule cacheRule = null;
-        if (getConnectionCache().size(did()) != 0) {
-            cacheRule = getConnectionCache().get(did()).stream()
-                    .filter(r -> (r.selector().equals(selector)))
-                    .findFirst()
-                    .orElse(null);
-        }
-
+        cacheRule = getConnectionCache().get(did(), connectionName);
 
         if (cacheRule == null) {
             //TODO consider a way to keep "external" FlowRules
@@ -294,7 +279,7 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
             return null;
         } else {
             //Update monitored values
-            log.debug("Attenuation retrieved {} dB for connection {}",
+            log.info("Attenuation retrieved {} dB for connection {}",
                     attenuation, ((LumentumFlowRule) cacheRule).getConnectionId());
             ((LumentumFlowRule) cacheRule).setAttenuation(attenuation);
             ((LumentumFlowRule) cacheRule).setInputPower(inputPower);
@@ -360,15 +345,15 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
         String module = pair.getLeft().toString();
         String connectionId = pair.getRight().toString();
 
-        log.debug("Lumentum driver new connection sent moduleId {} connId {}",
+        log.info("Lumentum driver new connection sent moduleId {} connId {}",
                 xc.getConnectionModule(),
                 xc.getConnectionId());
 
         //Conversion of ochSignal format (center frequency + diameter) to Lumentum frequency slot format (start - end)
-        Frequency freqRadius = Frequency.ofHz(xc.ochSignal().channelSpacing().frequency().asHz() / 2);
+        Frequency freqRadius = Frequency.ofGHz(xc.ochSignal().slotWidth().asGHz() / 2);
         Frequency center = xc.ochSignal().centralFrequency();
-        String startFreq = String.valueOf(center.subtract(freqRadius).asHz() / GHZ);
-        String endFreq = String.valueOf(center.add(freqRadius).asHz() / GHZ);
+        String startFreq = String.valueOf(center.subtract(freqRadius).asGHz());
+        String endFreq = String.valueOf(center.add(freqRadius).asGHz());
 
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("<rpc xmlns=\"urn:ietf:params:xml:ns:netconf:base:1.0\">" + "\n");
@@ -397,7 +382,7 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
         stringBuilder.append("</rpc>" + "\n");
 
         log.info("Lumentum ROADM20 - RPC add-connection sent to device {}", did());
-        log.debug("Lumentum ROADM20 - RPC add-connection sent to device {} {}", did(), stringBuilder);
+        log.info("Lumentum ROADM20 - RPC add-connection sent to device {} {}", did(), stringBuilder);
 
         return editCrossConnect(stringBuilder.toString());
     }
@@ -434,7 +419,7 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
         stringBuilder.append("</rpc>" + "\n");
 
         log.info("Lumentum ROADM20 - edit-connection sent to device {}", did());
-        log.debug("Lumentum ROADM20 - edit-connection sent to device {} {}", did(), stringBuilder);
+        log.info("Lumentum ROADM20 - edit-connection sent to device {} {}", did(), stringBuilder);
 
         return editCrossConnect(stringBuilder.toString());
     }
@@ -467,7 +452,7 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
         stringBuilder.append("</rpc>" + " \n");
 
         log.info("Lumentum ROADM20 - RPC delete-connection sent to device {}", did());
-        log.debug("Lumentum ROADM20 - - RPC delete-connection sent to device {} {}", did(), stringBuilder);
+        log.info("Lumentum ROADM20 - - RPC delete-connection sent to device {} {}", did(), stringBuilder);
 
         return editCrossConnect(stringBuilder.toString());
     }
@@ -485,7 +470,7 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
         stringBuilder.append("</rpc>" + "\n");
 
         log.info("Lumentum ROADM20 - RPC delete-external-connection sent to device {}", did());
-        log.debug("Lumentum ROADM20 - - RPC delete-external-connection sent to device {} {}", did(), stringBuilder);
+        log.info("Lumentum ROADM20 - - RPC delete-external-connection sent to device {} {}", did(), stringBuilder);
 
         return editCrossConnect(stringBuilder.toString());
     }
@@ -503,7 +488,7 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
         } catch (NetconfException e) {
             log.error("Failed to edit the CrossConnect edit-cfg for device {}",
                       handler().data().deviceId(), e);
-            log.debug("Failed configuration {}", xcString);
+            log.info("Failed configuration {}", xcString);
             return false;
         }
     }
@@ -522,7 +507,7 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
         int slots = (int) ((end - start) / ChannelSpacing.CHL_12P5GHZ.frequency().asGHz());
         int multiplier = 0;
 
-        //Conversion for 50 GHz slots
+        /*//Conversion for 50 GHz slots
         if (end - start == 50) {
             multiplier = (int) (((end - start) / 2 + start - Spectrum.CENTER_FREQUENCY.asGHz())
                     / ChannelSpacing.CHL_50GHZ.frequency().asGHz());
@@ -536,9 +521,15 @@ public class LumentumNetconfRoadmFlowRuleProgrammable extends AbstractHandlerBeh
                     / ChannelSpacing.CHL_100GHZ.frequency().asGHz());
 
             return new OchSignal(GridType.DWDM, ChannelSpacing.CHL_100GHZ, multiplier, slots);
-        }
+        }*/
 
-        return null;
+        multiplier = (int) (((end - start) / 2 + start - Spectrum.CENTER_FREQUENCY.asGHz())
+                / ChannelSpacing.CHL_6P25GHZ.frequency().asGHz());
+
+        return new OchSignal(GridType.FLEX, ChannelSpacing.CHL_6P25GHZ, multiplier, slots);
+
+
+        //return null;
     }
 
     /**
