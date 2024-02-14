@@ -1,6 +1,6 @@
 COMPILE_DEPS = CORE_DEPS + KRYO + CLI + [
     "//core/store/serializers:onos-core-serializers",
-    "//apps/netflow/api:onos-apps-netflow-api",
+    "//apps/ipflow-monitor/netflow/api:onos-apps-ipflow-monitor-netflow-api",
     "@io_netty_netty_common//jar",
     "@io_netty_netty//jar",
 ]

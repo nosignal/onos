@@ -1,6 +1,6 @@
 BUNDLES = [
-    "//apps/netflow/api:onos-apps-netflow-api",
-    "//apps/netflow/app:onos-apps-netflow-app",
+    "//apps/ipflow-monitor/netflow/api:onos-apps-ipflow-monitor-netflow-api",
+    "//apps/ipflow-monitor/netflow/app:onos-apps-ipflow-monitor-netflow-app",
 ]
 
 onos_app(
