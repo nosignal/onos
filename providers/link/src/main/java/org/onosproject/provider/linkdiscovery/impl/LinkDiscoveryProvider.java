@@ -337,7 +337,9 @@ public class LinkDiscoveryProvider extends AbstractProvider
                     evaluateLinks(device.id(), Sets.newHashSet());
                     break;
                 case DEVICE_AVAILABILITY_CHANGED:
-                    if (!deviceService.isAvailable(device.id())) {
+                    if (deviceService.isAvailable(device.id())) {
+                        executor.execute(() -> discoverLinks(device));
+                    } else {
                         evaluateLinks(device.id(), Sets.newHashSet());
                     }
                     break;
