@@ -17,6 +17,7 @@ package org.onosproject.workflow.api;
 
 import org.onosproject.store.Store;
 import org.onosproject.store.service.StorageException;
+import org.onosproject.workflow.api.lcm.WorkflowLcm;
 
 import java.util.Collection;
 
@@ -115,4 +116,15 @@ public interface WorkplaceStore extends Store<WorkflowDataEvent, WorkplaceStoreD
      * @param workplaceName workplace name
      */
     void removeWorkplaceContexts(String workplaceName);
+
+     /**
+     * Gets LCM of workflow context.
+     * @param name name of workflow context
+     * @return Current LCM operation of workflow context
+     * @throws StorageException storage exception
+     */
+    default WorkflowLcm getLcm(String name) throws StorageException {
+        return WorkflowLcm.RUN;
+    }
+
 }

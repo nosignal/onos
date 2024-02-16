@@ -54,4 +54,24 @@ public interface WorkflowExecutionService extends ListenerService<WorkflowDataEv
      */
     void registerEventMap(Class<? extends Event> eventType, Set<String> eventHintSet,
                           String contextName, String programCounterString) throws WorkflowException;
+
+    /**
+     * Unregister workflow event map.
+     * @param contextName workflow context name
+     * @throws WorkflowException workflow exception
+     */
+    default void unregisterEventMap(String contextName) throws WorkflowException {
+       return;
+    }
+
+    /**
+     * Schedule handler task to be executed after some milli-seconds.
+     * @param afterMs the milli-second to execute handler task.
+     * @param task handler task to be executed after some milli-seconds.
+     */
+    default void scheduleHandlerTask(long afterMs, HandlerTask task) {
+        return;
+    }
+
+
 }
