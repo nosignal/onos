@@ -97,7 +97,7 @@ public class WorkplaceWorkflow {
     public static class CreateWorkplace extends AbsWorkflowWorklet {
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             WorkflowDescription wfDesc = getWorkflowDesc(context);
 
@@ -146,7 +146,7 @@ public class WorkplaceWorkflow {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete the job of worklet by timeout
             } else {
                 super.timeout(context);
@@ -175,7 +175,7 @@ public class WorkplaceWorkflow {
         }
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             WorkflowDescription wfDesc = getWorkflowDesc(context);
 

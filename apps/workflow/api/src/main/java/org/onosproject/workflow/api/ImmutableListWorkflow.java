@@ -132,7 +132,7 @@ public final class ImmutableListWorkflow extends AbstractWorkflow {
                         staticDataModelInjector.inject(worklet, workletDesc);
                     }
                 }
-                if (worklet.isNext(context)) {
+                if (worklet.needsProcess(context)) {
                     return pc;
                 }
             }

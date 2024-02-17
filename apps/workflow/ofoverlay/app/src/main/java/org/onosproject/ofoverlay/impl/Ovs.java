@@ -383,7 +383,7 @@ public final class Ovs {
         Integer intOvsdbPort;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             OvsdbClientService ovsdbClient = OvsUtil.getOvsdbClient(context, strMgmtIp, intOvsdbPort);
             return ovsdbClient == null || !ovsdbClient.isConnected();
@@ -419,7 +419,7 @@ public final class Ovs {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete the job of worklet by timeout
             } else {
                 super.timeout(context);
@@ -437,7 +437,7 @@ public final class Ovs {
         String strMgmtIp;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             DeviceId devId = DeviceId.deviceId(OVSDB_DEVICE_PREFIX.concat(strMgmtIp));
 
@@ -466,7 +466,7 @@ public final class Ovs {
             DeviceEvent deviceEvent = (DeviceEvent) event;
             switch (deviceEvent.type()) {
                 case DEVICE_REMOVED:
-                    return !isNext(context);
+                    return !needsProcess(context);
                 default:
                     return false;
             }
@@ -474,7 +474,7 @@ public final class Ovs {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete worklet by timeout
             } else {
                 super.timeout(context);
@@ -494,7 +494,7 @@ public final class Ovs {
         JsonNode strSshAccessInfo;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             return strOvsVersion == null;
         }
@@ -527,7 +527,7 @@ public final class Ovs {
         ObjectNode strOfDevId;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             return strOfDevId == null;
         }
@@ -586,7 +586,7 @@ public final class Ovs {
         ObjectNode strOfDevId;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             check(strOfDevId != null, "invalid strOfDevIdUnderlay");
             String bridgeId = strOfDevId.get(bridgeName).asText();
@@ -661,7 +661,7 @@ public final class Ovs {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete the job of worklet by timeout
             } else {
                 super.timeout(context);
@@ -688,7 +688,7 @@ public final class Ovs {
         ObjectNode strOfDevIdOverlay;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             check(strOfDevIdOverlay != null, "invalid strOfDevIdOverlay");
             String bridge = strOfDevIdOverlay.get(BRIDGE_OVERLAY).asText();
@@ -766,7 +766,7 @@ public final class Ovs {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete the job of worklet by timeout
             } else {
                 super.timeout(context);
@@ -788,7 +788,7 @@ public final class Ovs {
         private static final String OVS_VXLAN_PORTNAME = "vxlan";
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             check(strOfDevIdOverlay != null, "invalid strOfDevIdOverlay");
             String bridge = strOfDevIdOverlay.get(BRIDGE_OVERLAY).asText();
@@ -835,7 +835,7 @@ public final class Ovs {
             DeviceEvent deviceEvent = (DeviceEvent) event;
             switch (deviceEvent.type()) {
                 case PORT_ADDED:
-                    return !isNext(context);
+                    return !needsProcess(context);
                 default:
                     return false;
             }
@@ -843,7 +843,7 @@ public final class Ovs {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete the job of worklet by timeout
             } else {
                 super.timeout(context);
@@ -872,7 +872,7 @@ public final class Ovs {
         ArrayNode arrNodePhysicalPorts;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
             check(strOfDevIdUnderlay != null, "invalid strOfDevIdUnderlay");
             String bridge = strOfDevIdUnderlay.get(BRIDGE_UNDERLAY).asText();
             DeviceId brphyDevId = DeviceId.deviceId(bridge);
@@ -899,7 +899,7 @@ public final class Ovs {
             DeviceEvent deviceEvent = (DeviceEvent) event;
             switch (deviceEvent.type()) {
                 case PORT_ADDED:
-                    return !isNext(context);
+                    return !needsProcess(context);
                 default:
                     return false;
             }
@@ -907,7 +907,7 @@ public final class Ovs {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete the job of worklet by timeout
             } else {
                 super.timeout(context);
@@ -990,7 +990,7 @@ public final class Ovs {
         String strVtepIp;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             SshAccessInfo sshAccessInfo = SshAccessInfo.valueOf(strSshAccessInfo);
             check(Objects.nonNull(sshAccessInfo), "Invalid ssh access info " + context.data());
@@ -1034,7 +1034,7 @@ public final class Ovs {
         String strMgmtIp;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             BridgeConfig bridgeConfig = OvsUtil.getOvsdbBehaviour(context, strMgmtIp, BridgeConfig.class);
 
@@ -1051,7 +1051,7 @@ public final class Ovs {
             bridgeConfig.deleteBridge(BridgeName.bridgeName(BRIDGE_OVERLAY));
 
             for (int i = 0; i < 10; i++) {
-                if (!isNext(context)) {
+                if (!needsProcess(context)) {
                     context.completed();
                     return;
                 }
@@ -1078,7 +1078,7 @@ public final class Ovs {
         String strMgmtIp;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             DeviceId devId = OvsUtil.buildOfDeviceId(IpAddress.valueOf(strMgmtIp), DEVID_IDX_BRIDGE_OVERLAY);
 
@@ -1107,7 +1107,7 @@ public final class Ovs {
             DeviceEvent deviceEvent = (DeviceEvent) event;
             switch (deviceEvent.type()) {
                 case DEVICE_REMOVED:
-                    return !isNext(context);
+                    return !needsProcess(context);
                 default:
                     return false;
             }
@@ -1115,7 +1115,7 @@ public final class Ovs {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete the job of worklet by timeout
             } else {
                 super.timeout(context);
@@ -1132,7 +1132,7 @@ public final class Ovs {
         String strMgmtIp;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             BridgeConfig bridgeConfig = OvsUtil.getOvsdbBehaviour(context, strMgmtIp, BridgeConfig.class);
 
@@ -1149,7 +1149,7 @@ public final class Ovs {
             bridgeConfig.deleteBridge(BridgeName.bridgeName(BRIDGE_UNDERLAY));
 
             for (int i = 0; i < 10; i++) {
-                if (!isNext(context)) {
+                if (!needsProcess(context)) {
                     context.completed();
                     return;
                 }
@@ -1176,7 +1176,7 @@ public final class Ovs {
         String strMgmtIp;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             DeviceId devId = OvsUtil.buildOfDeviceId(IpAddress.valueOf(strMgmtIp), DEVID_IDX_BRIDGE_UNDERLAY_NOVA);
 
@@ -1205,7 +1205,7 @@ public final class Ovs {
             DeviceEvent deviceEvent = (DeviceEvent) event;
             switch (deviceEvent.type()) {
                 case DEVICE_REMOVED:
-                    return !isNext(context);
+                    return !needsProcess(context);
                 default:
                     return false;
             }
@@ -1213,7 +1213,7 @@ public final class Ovs {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete the job of worklet by timeout
             } else {
                 super.timeout(context);
@@ -1233,7 +1233,7 @@ public final class Ovs {
         ObjectNode ofDevId;
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
 
             boolean isOfDevicePresent = true;
 
@@ -1297,7 +1297,7 @@ public final class Ovs {
             switch (deviceEvent.type()) {
                 case DEVICE_REMOVED:
                     log.trace("GOT DEVICE REMOVED EVENT FOR DEVICE {}", event.subject());
-                    return !isNext(context);
+                    return !needsProcess(context);
                 default:
                     return false;
             }
@@ -1305,7 +1305,7 @@ public final class Ovs {
 
         @Override
         public void timeout(WorkflowContext context) throws WorkflowException {
-            if (!isNext(context)) {
+            if (!needsProcess(context)) {
                 context.completed(); //Complete the job of worklet by timeout
             } else {
                 super.timeout(context);

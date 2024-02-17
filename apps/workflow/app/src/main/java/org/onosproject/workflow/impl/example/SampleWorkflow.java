@@ -220,7 +220,7 @@ public class SampleWorkflow {
         }
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
             ObjectNode node = allocOrGetModel(context);
             log.info("workflow-isNext {}-{}", context.workplaceName(), this.getClass().getSimpleName());
             sleep(30);
@@ -255,7 +255,7 @@ public class SampleWorkflow {
         }
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
             ObjectNode node = allocOrGetModel(context);
             log.info("workflow-isNext {}-{}", context.workplaceName(), this.getClass().getSimpleName());
             sleep(50);
@@ -280,7 +280,7 @@ public class SampleWorkflow {
         }
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
             ObjectNode node = allocOrGetModel(context);
             log.info("workflow-isNext {}-{}", context.workplaceName(), this.getClass().getSimpleName());
             sleep(10);
@@ -304,7 +304,7 @@ public class SampleWorkflow {
         }
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
             ObjectNode node = allocOrGetModel(context);
             log.info("workflow-isNext {}-{}", context.workplaceName(), this.getClass().getSimpleName());
             sleep(10);
@@ -328,7 +328,7 @@ public class SampleWorkflow {
         }
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
             ObjectNode node = allocOrGetModel(context);
             log.info("workflow-isNext {}-{}", context.workplaceName(), this.getClass().getSimpleName());
             sleep(10);
@@ -354,7 +354,7 @@ public class SampleWorkflow {
         }
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
             ObjectNode node = allocOrGetModel(context);
             log.info("workflow-isNext {}-{}", context.workplaceName(), this.getClass().getSimpleName());
             sleep(10);
@@ -381,7 +381,7 @@ public class SampleWorkflow {
         }
 
         @Override
-        public boolean isNext(WorkflowContext context) throws WorkflowException {
+        public boolean needsProcess(WorkflowContext context) throws WorkflowException {
             ObjectNode node = allocOrGetModel(context);
             log.info("workflow-isNext {}-{}", context.workplaceName(), this.getClass().getSimpleName());
             sleep(10);

@@ -26,7 +26,7 @@ public interface BranchWorklet extends Worklet {
     }
 
     @Override
-    default boolean isNext(WorkflowContext context) throws WorkflowException {
+    default boolean needsProcess(WorkflowContext context) throws WorkflowException {
         throw new WorkflowException("This workletType.isNext should not be called");
     }
 

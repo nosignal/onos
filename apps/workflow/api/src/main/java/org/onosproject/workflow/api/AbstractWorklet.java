@@ -34,7 +34,7 @@ public abstract class AbstractWorklet implements Worklet {
     }
 
     @Override
-    public boolean isNext(WorkflowContext context) throws WorkflowException {
+    public boolean needsProcess(WorkflowContext context) throws WorkflowException {
         throw new WorkflowException("(" + tag() + ").isNext should not be called");
     }
 

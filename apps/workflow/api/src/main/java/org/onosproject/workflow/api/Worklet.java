@@ -44,7 +44,7 @@ public interface Worklet {
      * @return true means this worklet is the next worklet to be processed
      * @throws WorkflowException workflow exception
      */
-    boolean isNext(WorkflowContext context) throws WorkflowException;
+    boolean needsProcess(WorkflowContext context) throws WorkflowException;
 
     /**
      * Checks whether is this worklet completed or not. 'isCompleted' checking is triggered by an event task.
@@ -82,7 +82,7 @@ public interface Worklet {
             }
 
             @Override
-            public boolean isNext(WorkflowContext context) throws WorkflowException {
+            public boolean needsProcess(WorkflowContext context) throws WorkflowException {
                 throw new WorkflowException("(" + tag() + ").isNext should not be called");
             }
 
@@ -112,7 +112,7 @@ public interface Worklet {
             }
 
             @Override
-            public boolean isNext(WorkflowContext context) throws WorkflowException {
+            public boolean needsProcess(WorkflowContext context) throws WorkflowException {
                 throw new WorkflowException("(" + tag() + ").isNext should not be called");
             }
 
@@ -142,7 +142,7 @@ public interface Worklet {
             }
 
             @Override
-            public boolean isNext(WorkflowContext context) throws WorkflowException {
+            public boolean needsProcess(WorkflowContext context) throws WorkflowException {
                 throw new WorkflowException("(" + tag() + ").isNext should not be called");
             }
 
