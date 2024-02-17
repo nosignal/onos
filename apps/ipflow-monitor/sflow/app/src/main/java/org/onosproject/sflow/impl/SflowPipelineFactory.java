@@ -45,7 +45,11 @@ public class SflowPipelineFactory implements ChannelPipelineFactory {
      */
     @Override
     public ChannelPipeline getPipeline() throws Exception {
+        SflowChannelHandler handler = new SflowChannelHandler(controller);
+
         ChannelPipeline pipeline = Channels.pipeline();
+        pipeline.addLast("sflowmessagedecoder", new SflowMessageDecoder());
+        pipeline.addLast("ActiveHandler", handler);
         return pipeline;
     }
 
