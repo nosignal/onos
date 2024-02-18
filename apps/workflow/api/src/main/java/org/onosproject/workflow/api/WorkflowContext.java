@@ -187,4 +187,13 @@ public abstract class WorkflowContext extends WorkflowData {
      * @throws WorkflowException workflow exception
      */
     public abstract <T> T getService(Class<T> serviceClass) throws WorkflowException;
+
+    /**
+     * Set custom lcm state of the workflow.
+     *
+     * @param lcmState custom lcm state
+     */
+    public void setLcmState(CustomLcmState lcmState) {
+       return;
+    }
 }
