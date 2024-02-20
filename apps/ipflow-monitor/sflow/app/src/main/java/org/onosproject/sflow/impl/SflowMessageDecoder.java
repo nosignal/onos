@@ -39,7 +39,7 @@ public class SflowMessageDecoder extends FrameDecoder {
                 byte[] bytes = new byte[buffer.readableBytes()];
                 buffer.readBytes(bytes);
                 ctx.setAttachment(null);
-                return null;
+                return SflowPacket.deserializer().deserialize(bytes, 0, bytes.length);
             }
         } catch (Exception e) {
             log.error("sFlow message decode error ", e);

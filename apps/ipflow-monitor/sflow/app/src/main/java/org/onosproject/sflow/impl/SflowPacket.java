@@ -18,6 +18,8 @@ package org.onosproject.sflow.impl;
 
 import java.util.LinkedList;
 import java.util.List;
+import com.google.common.base.MoreObjects;
+import java.util.Objects;
 
 import org.onosproject.sflow.SflowSample;
 import org.onlab.packet.Deserializer;
@@ -178,6 +180,66 @@ public final class SflowPacket extends BasePacket {
     @Override
     public byte[] serialize() {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 59 * hash + this.version;
+        hash = 59 * hash + this.agentIpVersion;
+        hash = 59 * hash + this.seqNumber;
+        hash = 59 * hash + this.subAgentID;
+        hash = 59 * hash + this.sysUptime;
+        hash = 59 * hash + this.numberOfSamples;
+        hash = 59 * hash + Objects.hashCode(this.agentAddress);
+        hash = 59 * hash + Objects.hashCode(this.sFlowsample);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final SflowPacket other = (SflowPacket) obj;
+        if (this.version != other.version) {
+            return false;
+        }
+        if (this.agentIpVersion != other.agentIpVersion) {
+            return false;
+        }
+        if (this.seqNumber != other.seqNumber) {
+            return false;
+        }
+        if (this.subAgentID != other.subAgentID) {
+            return false;
+        }
+        if (this.sysUptime != other.sysUptime) {
+            return false;
+        }
+        if (this.numberOfSamples != other.numberOfSamples) {
+            return false;
+        }
+        return Objects.equals(this.agentAddress, other.agentAddress);
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(getClass())
+                .add("version", version)
+                .add("agentIpVersion", agentIpVersion)
+                .add("seqNumber", seqNumber)
+                .add("subAgentID", subAgentID)
+                .add("sysUptime", sysUptime)
+                .add("numberOfSamples", numberOfSamples)
+                .add("agentAddress", agentAddress)
+                .toString();
     }
 
     /**
