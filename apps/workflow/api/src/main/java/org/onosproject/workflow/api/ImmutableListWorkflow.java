@@ -56,11 +56,6 @@ public final class ImmutableListWorkflow extends AbstractWorkflow {
     private static StaticDataModelInjector staticDataModelInjector = new StaticDataModelInjector();
 
     /**
-     * Workflow Logger injector.
-     */
-    private WorkflowLoggerInjector workflowLoggerInjector = new WorkflowLoggerInjector();
-
-    /**
      * Constructor of ImmutableListWorkflow.
      *
      * @param builder builder of ImmutableListWorkflow
@@ -89,7 +84,7 @@ public final class ImmutableListWorkflow extends AbstractWorkflow {
         ProgramCounter current = context.current();
         check(current != null, "Invalid program counter");
 
-        ProgramCounter pc = current.clone();
+        ProgramCounter pc = current.pcClone();
 
         for (int i = current.workletIndex(); i < program.size(); pc = increased(pc), i++) {
 
@@ -123,7 +118,6 @@ public final class ImmutableListWorkflow extends AbstractWorkflow {
                 continue;
 
             } else {
-                workflowLoggerInjector.inject(worklet, context);
                 // isNext is read only. It does not perform 'inhale'.
                 dataModelInjector.inject(worklet, context);
                 WorkletDescription workletDesc = getWorkletDesc(pc);
@@ -150,7 +144,7 @@ public final class ImmutableListWorkflow extends AbstractWorkflow {
         }
 
         WorkletDescription workletDesc = program.get(increaedIndex);
-        return ProgramCounter.valueOf(workletDesc.tag(), increaedIndex);
+        return ProgramCounter.valueOf(workletDesc.tag(), increaedIndex, "");
     }
 
     @Override
@@ -208,7 +202,7 @@ public final class ImmutableListWorkflow extends AbstractWorkflow {
         int size = program.size();
         List pcList = new ArrayList();
         for (int i = 0; i < size; i++) {
-            pcList.add(ProgramCounter.valueOf(program.get(i).tag(), i));
+            pcList.add(ProgramCounter.valueOf(program.get(i).tag(), i, ""));
         }
 
         return pcList;
@@ -368,3 +362,4 @@ public final class ImmutableListWorkflow extends AbstractWorkflow {
         }
     }
 }
+

@@ -22,37 +22,52 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.MoreObjects;
 import org.slf4j.Logger;
 
+import java.util.Optional;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * Class for default worklet description.
+ * Class for default work-let description.
  */
 public final class DefaultWorkletDescription implements WorkletDescription {
 
     protected static final Logger log = getLogger(DefaultWorkletDescription.class);
 
     /**
-     * worklet Name.
+     * work-let Name.
      */
     private String tag;
 
     /**
-     * worklet data model.
+     * Label of work-let description(Optional).
      */
-    private JsonDataModelTree data;
+    private Optional<Label> optLabel;
 
     /**
-     * Constructor of worklet description.
-     *
-     * @param builder worklet description builder
+     * work-let staticData model.
      */
-    public DefaultWorkletDescription(DefaultWorkletDescription.Builder builder) {
+    private JsonDataModelTree staticData;
+
+    /**
+     * Constructor of work-let description.
+     *
+     * @param builder work-let description builder
+     */
+    private DefaultWorkletDescription(DefaultWorkletDescription.Builder builder) {
         this.tag = builder.tag;
-        this.data = builder.data;
+        this.optLabel = builder.optLabel;
+        this.staticData = builder.staticData;
     }
 
+    /**
+     * Constructor of work-let description.
+     *
+     * @param tag work-let class name
+     */
     public DefaultWorkletDescription(String tag) {
         this.tag = tag;
+        this.optLabel = Optional.empty();
+        this.staticData = new JsonDataModelTree();
     }
 
     @Override
@@ -61,15 +76,21 @@ public final class DefaultWorkletDescription implements WorkletDescription {
     }
 
     @Override
+    public Optional<Label> label() {
+        return this.optLabel;
+    }
+
+    @Override
     public JsonDataModelTree data() {
-        return this.data;
+        return this.staticData;
     }
 
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(getClass())
                 .add("tag", tag())
-                .add("data", data())
+                .add("staticData", data())
+                .add("optLabel", label())
                 .toString();
     }
 
@@ -83,24 +104,40 @@ public final class DefaultWorkletDescription implements WorkletDescription {
     }
 
     /**
-     * Builder for worklet description.
+     * Builder for work-let description.
      */
     public static class Builder {
 
         /**
-         * worklet name.
+         * work-let name.
          */
         private String tag;
 
         /**
-         * static data model tree.
+         * Label of work-let description(Optional).
          */
-        JsonDataModelTree data = new JsonDataModelTree();
+        private Optional<Label> optLabel = Optional.empty();
 
         /**
-         * Sets worklet name.
+         * static staticData model tree.
+         */
+        JsonDataModelTree staticData = new JsonDataModelTree();
+
+        /**
+         * Sets optLabel of work-let description.
          *
-         * @param tag worklet name
+         * @param label optLabel of work-let description
+         * @return builder
+         */
+        public DefaultWorkletDescription.Builder label(Label label) {
+            this.optLabel = Optional.of(label);
+            return this;
+        }
+
+        /**
+         * Sets work-let name.
+         *
+         * @param tag work-let name
          * @return builder
          */
         public DefaultWorkletDescription.Builder name(String tag) {
@@ -108,63 +145,107 @@ public final class DefaultWorkletDescription implements WorkletDescription {
             return this;
         }
 
-
+        /**
+         * Sets static data model with path and string data type value.
+         *
+         * @param path static data model path
+         * @param value string model value
+         * @return builder
+         * @throws WorkflowException workflow exception
+         */
         public DefaultWorkletDescription.Builder staticDataModel(String path, String value) throws WorkflowException {
 
-            data.setAt(path, value);
+            staticData.setAt(path, value);
 
             return this;
         }
 
+        /**
+         * Sets static data model with path and integer data type value.
+         *
+         * @param path static data model path
+         * @param value integer model value
+         * @return builder
+         * @throws WorkflowException workflow exception
+         */
         public DefaultWorkletDescription.Builder staticDataModel(String path, Integer value) throws WorkflowException {
 
-            data.setAt(path, value);
+            staticData.setAt(path, value);
 
             return this;
         }
 
+        /**
+         * Sets static data model with path and boolean data type value.
+         *
+         * @param path static data model path
+         * @param value boolean model value
+         * @return builder
+         * @throws WorkflowException workflow exception
+         */
         public DefaultWorkletDescription.Builder staticDataModel(String path, Boolean value) throws WorkflowException {
 
-            data.setAt(path, value);
+            staticData.setAt(path, value);
 
             return this;
         }
 
+        /**
+         * Sets static data model with path and json data type value.
+         *
+         * @param path static data model path
+         * @param value json model value
+         * @return builder
+         * @throws WorkflowException workflow exception
+         */
         public DefaultWorkletDescription.Builder staticDataModel(String path, JsonNode value) throws WorkflowException {
 
-            data.setAt(path, value);
+            staticData.setAt(path, value);
 
             return this;
         }
 
+        /**
+         * Sets static data model with path and json array data type value.
+         *
+         * @param path static data model path
+         * @param value json-array model value
+         * @return builder
+         * @throws WorkflowException workflow exception
+         */
         public DefaultWorkletDescription.Builder staticDataModel(String path, ArrayNode value)
                 throws WorkflowException {
 
-            data.setAt(path, value);
+            staticData.setAt(path, value);
 
             return this;
         }
 
+        /**
+         * Sets static data model with path and json-object data type value.
+         *
+         * @param path static data model path
+         * @param value json-object model value
+         * @return builder
+         * @throws WorkflowException workflow exception
+         */
         public DefaultWorkletDescription.Builder staticDataModel(String path, ObjectNode value)
                 throws WorkflowException {
 
-            data.setAt(path, value);
+            staticData.setAt(path, value);
 
             return this;
         }
 
-
         /**
-         * Builds worklet description from builder.
+         * Builds work-let description from builder.
          *
-         * @return instance of worklet description
+         * @return instance of work-let description
          * @throws WorkflowException workflow exception
          */
         public DefaultWorkletDescription build() {
-
             return new DefaultWorkletDescription(this);
         }
-
-
     }
 }
+

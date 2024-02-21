@@ -462,7 +462,7 @@ public final class JsonDataModelTree implements DataModelTree {
             }
             list = reader.readValue(node);
         } catch (Exception e) {
-            log.info("exception while parsing list {}", e.getStackTrace());
+            log.error("exception while parsing list ", e);
         }
         return list;
     }
@@ -487,7 +487,7 @@ public final class JsonDataModelTree implements DataModelTree {
             });
             map = reader.readValue(node);
         } catch (Exception e) {
-            log.info("exception while parsing map {}", e.getStackTrace());
+            log.error("exception while parsing map ", e);
         }
         return map;
     }

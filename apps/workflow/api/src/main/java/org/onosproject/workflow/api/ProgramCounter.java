@@ -20,67 +20,108 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * An interface representing workflow program counter.
+ * A class representing workflow program counter.
  */
 public final class ProgramCounter {
 
-    public static final ProgramCounter INIT_PC = ProgramCounter.valueOf(Worklet.Common.INIT.name(), 0);
+    public static final ProgramCounter INIT_PC
+            = ProgramCounter.valueOf("", 0, Worklet.Common.INIT.name());
+
+    public static final ProgramCounter TERMINATE_PC
+            = ProgramCounter.valueOf("", 0, Worklet.Common.COMPLETED.name());
 
     /**
-     * index of the worklet.
+     * Section name in workflow.
+     */
+    private final String sectionName;
+
+    /**
+     * index of the work-let in the sectionName.
      */
     private final int workletIndex;
 
     /**
-     * Type of worklet.
+     * Number of work-let processed.
+     */
+    private int indexCount;
+
+    /**
+     * Type of work-let.
      */
     private final String workletType;
 
+
     /**
-     * Index of worklet.
-     * @return index of worklet
+     * Section name in workflow.
+     * @return sectionName name
+     */
+    public String sectionName() {
+        return this.sectionName;
+    }
+
+    /**
+     * Index of work-let in the workflow section.
+     * @return index of work-let
      */
     public int workletIndex() {
         return this.workletIndex;
     }
 
     /**
-     * Type of worklet.
-     * @return type of worklet
+     * Number of work-let processed.
+     * @return index count of work-let
+     */
+    public int indexCount() {
+        return this.indexCount;
+    }
+
+    /**
+     * Type of work-let.
+     * @return type of work-let
      */
     public String workletType() {
         return this.workletType;
     }
 
     /**
-     * Constructor of workflow Program Counter.
-     * @param workletType type of worklet
-     * @param workletIndex index of worklet
+     * Set total number of work-let processed.
+     * @param indexCount total number of work-let processed
      */
-    private ProgramCounter(String workletType, int workletIndex) {
+    public void setIndexCount(int indexCount) {
+        this.indexCount = indexCount;
+    }
+
+    /**
+     * Constructor of workflow Program Counter.
+     * @param workletType type of work-let
+     * @param workletIndex index of work-let
+     */
+    private ProgramCounter(String sectionName, int workletIndex, int indexCount, String workletType) {
         this.workletType = workletType;
+        this.sectionName = sectionName;
         this.workletIndex = workletIndex;
+        this.indexCount = indexCount;
     }
 
     /**
      * Clones this workflow Program Counter.
      * @return clone of this workflow Program Counter
      */
-    public ProgramCounter clone() {
-        return ProgramCounter.valueOf(this.workletType(), this.workletIndex());
+    public ProgramCounter pcClone() {
+        return ProgramCounter.valueOf(this.sectionName(), this.workletIndex(), this.workletType());
     }
 
     /**
-     * Returns whether this program counter is INIT worklet program counter.
-     * @return whether this program counter is INIT worklet program counter
+     * Returns whether this program counter is INIT work-let program counter.
+     * @return whether this program counter is INIT work-let program counter
      */
     public boolean isInit() {
         return Worklet.Common.INIT.tag().equals(this.workletType);
     }
 
     /**
-     * Returns whether this program counter is COMPLETED worklet program counter.
-     * @return whether this program counter is COMPLETED worklet program counter
+     * Returns whether this program counter is COMPLETED work-let program counter.
+     * @return whether this program counter is COMPLETED work-let program counter
      */
     public boolean isCompleted() {
         return Worklet.Common.COMPLETED.tag().equals(this.workletType);
@@ -100,38 +141,45 @@ public final class ProgramCounter {
             return false;
         }
         return Objects.equals(this.workletType(), ((ProgramCounter) obj).workletType())
-                && Objects.equals(this.workletIndex(), ((ProgramCounter) obj).workletIndex());
+                && Objects.equals(this.sectionName(), ((ProgramCounter) obj).sectionName())
+                && Objects.equals(this.workletIndex(), ((ProgramCounter) obj).workletIndex())
+         && Objects.equals(this.workletIndex(), ((ProgramCounter) obj).workletIndex());
     }
 
     @Override
     public String toString() {
-        return String.format("(%d)%s", workletIndex, workletType);
+        return String.format("(%s:%d:%d)%s", sectionName, workletIndex, indexCount, workletType);
     }
 
     /**
      * Builder of workflow Program Counter.
-     * @param workletType type of worklet
-     * @param workletIndex index of worklet
+     * @param workletType type of work-let
+     * @param sectionName name of section
+     * @param workletIndex index of work-let
      * @return program counter
      */
-    public static ProgramCounter valueOf(String workletType, int workletIndex) {
-        return new ProgramCounter(workletType, workletIndex);
+    public static ProgramCounter valueOf(String sectionName, int workletIndex, String workletType) {
+        return valueOf(sectionName, workletIndex, workletIndex, workletType);
+    }
+
+    public static ProgramCounter valueOf(String sectionName, int workletIndex, int moveCount, String workletType) {
+        return new ProgramCounter(sectionName, workletIndex, moveCount, workletType);
     }
 
     /**
      * Builder of workflow Program Counter.
-     * @param strProgramCounter string format for program counter
+     * @param strProgramCounter string format for program counter '([sectionName]:[index])[class name]'
      * @return program counter
      */
     public static ProgramCounter valueOf(String strProgramCounter) {
 
-        Matcher m = Pattern.compile("\\((\\d+)\\)(.+)").matcher(strProgramCounter);
+        Matcher m = Pattern.compile("\\((.+)\\:(\\d+)\\:(\\d+)\\)(.+)").matcher(strProgramCounter);
 
         if (!m.matches()) {
             throw new IllegalArgumentException("Malformed program counter string");
         }
 
-        return new ProgramCounter(m.group(2), Integer.parseInt(m.group(1)));
+        return new ProgramCounter(m.group(1), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)), m.group(4));
     }
 
 }

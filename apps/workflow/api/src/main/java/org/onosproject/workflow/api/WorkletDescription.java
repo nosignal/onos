@@ -16,6 +16,8 @@
 package org.onosproject.workflow.api;
 
 
+import java.util.Optional;
+
 public interface WorkletDescription {
 
     /**
@@ -26,11 +28,17 @@ public interface WorkletDescription {
     String tag();
 
     /**
-     * Gets worklet data model.
+     * Gets label of worklet description.
      *
-     * @return worklet data model
+     * @return worklet label
+     */
+    Optional<Label> label();
+
+    /**
+     * Gets worklet staticData model.
+     *
+     * @return worklet staticData model
      */
     JsonDataModelTree data();
-
-
 }
+
