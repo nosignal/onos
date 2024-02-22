@@ -25,10 +25,10 @@ import java.util.regex.Pattern;
 public final class ProgramCounter {
 
     public static final ProgramCounter INIT_PC
-            = ProgramCounter.valueOf("", 0, Worklet.Common.INIT.name());
+            = ProgramCounter.valueOf(ListWorkflowSection.MAIN_SECTION, 0, Worklet.Common.INIT.name());
 
     public static final ProgramCounter TERMINATE_PC
-            = ProgramCounter.valueOf("", 0, Worklet.Common.COMPLETED.name());
+            = ProgramCounter.valueOf(ListWorkflowSection.MAIN_SECTION, 0, Worklet.Common.COMPLETED.name());
 
     /**
      * Section name in workflow.
