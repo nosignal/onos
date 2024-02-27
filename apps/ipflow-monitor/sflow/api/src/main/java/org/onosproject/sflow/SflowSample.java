@@ -15,20 +15,142 @@
  */
 package org.onosproject.sflow;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.onlab.packet.BasePacket;
+import org.onlab.packet.DeserializationException;
+import org.onlab.packet.Deserializer;
+
 /**
  * The sFlow Agent uses two forms of sampling.
  * statistical packet-based sampling of switched flows,
- * and time-based sampling of network interface statistics.
+ * and time-based sampling of network interface statistics..
  * Ref : https://datatracker.ietf.org/doc/html/rfc3176
  */
-public interface SflowSample {
+public abstract class SflowSample extends BasePacket {
+
+    private int enterprise;
+
+    private Type type;
+
+    private int length;
+
+    private int sequenceNumber;
+
+    private int sourceId;
+
+    private int sourceIndex;
+
+    private int numberOfRecords;
 
     /**
-     * Get sflow sampling type.
-     * Sflow packet sampling type.
+     * Get sFlow agent enterprise id.
      *
-     *
-     * @return sampling type number.
+     * @return agent enterprise.
      */
-    int getSampleType();
+    public int getEnterprise() {
+        return enterprise;
+    }
+
+    /**
+     * Get sFlow sample type.
+     *
+     * @return sample type.
+     */
+    public Type getType() {
+        return type;
+    }
+
+    /**
+     * Get sFlow sample length.
+     *
+     * @return sample length.
+     */
+    public int getLength() {
+        return length;
+    }
+
+    /**
+     * Get sFlow sample sequence number.
+     *
+     * @return sequence number.
+     */
+    public int getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    /**
+     * Get sFlow source id.
+     *
+     * @return source id.
+     */
+    public int getSourceId() {
+        return sourceId;
+    }
+
+    /**
+     * Get sFlow source index.
+     *
+     * @return source index.
+     */
+    public int getSourceIndex() {
+        return sourceIndex;
+    }
+
+    /**
+     * Get total number of sample records.
+     *
+     * @return total number of sample records.
+     */
+    public int getNumberOfRecords() {
+        return numberOfRecords;
+    }
+
+    /**
+     * Sample type.
+     * Samples: Flow sample, Counter sample.
+     */
+    public enum Type {
+
+        FLOW_DATA(1, FlowSample.deserializer()),
+        COUNTER_DATA(2, CounterSample.deserializer());
+
+
+        private final int sampleType;
+        private final Deserializer deserializer;
+
+        Type(int sampleType, Deserializer deserializer) {
+            this.sampleType = sampleType;
+            this.deserializer = deserializer;
+        }
+
+        private static Map<Integer, Type> parser = new ConcurrentHashMap<>();
+
+        static {
+            Arrays.stream(Type.values()).forEach(type -> parser.put(type.sampleType, type));
+        }
+
+        public static Type getType(int sampleType) throws DeserializationException {
+            if ((sampleType < 1) || (sampleType > 2)) {
+                throw new DeserializationException("Invalid sample type");
+            }
+            return Optional.of(sampleType)
+                    .filter(id -> parser.containsKey(id))
+                    .map(id -> parser.get(id))
+                    .orElse(FLOW_DATA);
+        }
+
+        public Deserializer getDecoder() {
+            return this.deserializer;
+        }
+
+    }
+
+    @Override
+    public byte[] serialize() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }
