@@ -32,19 +32,19 @@ import org.onlab.packet.Deserializer;
  */
 public abstract class SflowSample extends BasePacket {
 
-    private int enterprise;
+    int enterprise;
 
-    private Type type;
+    Type type;
 
-    private int length;
+    int length;
 
-    private int sequenceNumber;
+    int sequenceNumber;
 
-    private int sourceId;
+    int sourceId;
 
-    private int sourceIndex;
+    int sourceIndex;
 
-    private int numberOfRecords;
+    int numberOfRecords;
 
     /**
      * Get sFlow agent enterprise id.
