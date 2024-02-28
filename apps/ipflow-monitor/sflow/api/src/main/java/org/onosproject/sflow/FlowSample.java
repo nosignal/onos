@@ -23,6 +23,8 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * A sample involves either copying the packet's header, or
  * extracting features from the packet (see sFlow Datagram Format for a
@@ -82,6 +84,95 @@ public final class FlowSample extends SflowSample {
 
     private List<Object> records;
 
+    private FlowSample(Builder builder) {
+        this.enterprise = builder.enterprise;
+        this.type = builder.type;
+        this.length = builder.length;
+        this.sequenceNumber = builder.sequenceNumber;
+        this.sourceId = builder.sourceId;
+        this.sourceIndex = builder.sourceIndex;
+        this.numberOfRecords = builder.numberOfRecords;
+        this.samplingRate = builder.samplingRate;
+        this.samplePool = builder.samplePool;
+        this.drops = builder.drops;
+        this.inputInterfaceId = builder.inputInterfaceId;
+        this.inputInterfaceValue = builder.inputInterfaceValue;
+        this.outputInterfaceId = builder.outputInterfaceId;
+        this.outputInterfaceValue = builder.outputInterfaceValue;
+        this.records = builder.records;
+    }
+
+    /**
+     * Get sFlow flow sampling rate.
+     *
+     * @return flow sampling rate.
+     */
+    public int getSamplingRate() {
+        return samplingRate;
+    }
+
+    /**
+     * Get sFlow sample pool.
+     *
+     * @return flow sample pool.
+     */
+    public int getSamplePool() {
+        return samplePool;
+    }
+
+    /**
+     * Get sFlow packet drop.
+     *
+     * @return packet drop.
+     */
+    public int getDrops() {
+        return drops;
+    }
+
+    /**
+     * Get sFlow packet ingress interface id.
+     *
+     * @return packet ingress interface id.
+     */
+    public int getInputInterfaceId() {
+        return inputInterfaceId;
+    }
+
+    /**
+     * Get sFlow packet ingress interface value.
+     *
+     * @return packet ingress interface value.
+     */
+    public int getInputInterfaceValue() {
+        return inputInterfaceValue;
+    }
+
+    /**
+     * Get sFlow packet egress interface id.
+     *
+     * @return packet egress interface id.
+     */
+    public int getOutputInterfaceId() {
+        return outputInterfaceId;
+    }
+
+    /**
+     * Get sFlow packet egress interface value.
+     *
+     * @return packet egress interface value.
+     */
+    public int getOutputInterfaceValue() {
+        return outputInterfaceValue;
+    }
+
+    /**
+     * Get sFlow flow records.
+     *
+     * @return flow records.
+     */
+    public List<Object> getRecords() {
+        return records;
+    }
 
     /**
      * Data deserializer function for flow sample data.
@@ -180,7 +271,7 @@ public final class FlowSample extends SflowSample {
     }
 
     /**
-     * Builder for sFlow packet.
+     * Builder for sFlow flow sample.
      */
     private static class Builder {
 
@@ -390,6 +481,28 @@ public final class FlowSample extends SflowSample {
             return this;
         }
 
+        /**
+         * Checks arguments for sFlow sample flow.
+         */
+        private void checkArguments() {
+            checkState(type != null, "Invalid sample type.");
+            checkState(sourceId != 0, "Invalid source id.");
+            checkState(sequenceNumber != 0, "Invalid sequence number.");
+            checkState(numberOfRecords != 0, "Invalid number of records.");
+            checkState(samplingRate != 0, "Invalid sample rate.");
+            checkState(inputInterfaceId != 0, "Invalid ingress interface id.");
+            checkState(outputInterfaceId != 0, "Invalid egress interface id.");
+            checkState(records.size() != 0, "Sample record is empty.");
+        }
 
+        /**
+         * Builds sFlow sample flow.
+         *
+         * @return flowsample.
+         */
+        public FlowSample build() {
+            checkArguments();
+            return new FlowSample(this);
+        }
     }
 }

@@ -15,8 +15,15 @@
  */
 package org.onosproject.sflow;
 
-import java.util.List;
 import org.onlab.packet.Deserializer;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+
+import com.google.common.base.MoreObjects;
+
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * the sFlow Agent keep a list of counter sources being sampled.
@@ -55,6 +62,25 @@ public final class CounterSample extends SflowSample {
 
     private List<Object> records;
 
+    private CounterSample(Builder builder) {
+        this.enterprise = builder.enterprise;
+        this.type = builder.type;
+        this.length = builder.length;
+        this.sequenceNumber = builder.sequenceNumber;
+        this.sourceId = builder.sourceId;
+        this.sourceIndex = builder.sourceIndex;
+        this.numberOfRecords = builder.numberOfRecords;
+        this.records = builder.records;
+    }
+
+    /**
+     * Get sFlow counter records.
+     *
+     * @return counter records.
+     */
+    public List<Object> getRecords() {
+        return records;
+    }
 
     /**
      * Data deserializer function for flow interface counter.
@@ -67,4 +93,204 @@ public final class CounterSample extends SflowSample {
         };
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 59 * hash + Objects.hashCode(this.type);
+        hash = 59 * hash + this.length;
+        hash = 59 * hash + this.sequenceNumber;
+        hash = 59 * hash + this.sourceId;
+        hash = 59 * hash + this.numberOfRecords;
+        hash = 59 * hash + Objects.hashCode(this.records);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CounterSample other = (CounterSample) obj;
+        if (this.type != other.type) {
+            return false;
+        }
+        if (this.length != other.length) {
+            return false;
+        }
+        if (this.sequenceNumber != other.sequenceNumber) {
+            return false;
+        }
+        if (this.sourceId != other.sourceId) {
+            return false;
+        }
+        if (this.sourceIndex != other.sourceIndex) {
+            return false;
+        }
+        if (this.numberOfRecords != other.numberOfRecords) {
+            return false;
+        }
+        return Objects.equals(this.records, other.records);
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(getClass())
+                .add("enterprise", enterprise)
+                .add("type", type)
+                .add("length", length)
+                .add("sequenceNumber", sequenceNumber)
+                .add("sourceId", sourceId)
+                .add("sourceIndex", sourceIndex)
+                .add("numberOfRecords", numberOfRecords)
+                .add("records", records)
+                .toString();
+    }
+
+    /**
+     * Builder for sFlow counter sample packet.
+     */
+    private static class Builder {
+
+        private int enterprise;
+
+        private SflowSample.Type type;
+
+        private int length;
+
+        private int sequenceNumber;
+
+        private int sourceId;
+
+        private int sourceIndex;
+
+        private int numberOfRecords;
+
+        private List<Object> records = new LinkedList<>();
+
+        /**
+         * Setter sFlow enterprise id.
+         *
+         * @param enterprise sFlow enterprise id.
+         * @return this class builder.
+         */
+        public Builder enterprise(int enterprise) {
+            this.enterprise = enterprise;
+            return this;
+        }
+
+        /**
+         * Setter sFlow sample length.
+         *
+         * @param length sample length.
+         * @return this class builder.
+         */
+        public Builder length(int length) {
+            this.length = length;
+            return this;
+        }
+
+        /**
+         * Setter sFlow sample type.
+         *
+         * @param type sFlow sample type.
+         * @return this class builder.
+         */
+        public Builder type(SflowSample.Type type) {
+            this.type = type;
+            return this;
+        }
+
+        /**
+         * Setter sFlow flow packet sequence number.
+         *
+         * @param sequenceNumber flow packet sequence number.
+         * @return this class builder.
+         */
+        public Builder sequenceNumber(int sequenceNumber) {
+            this.sequenceNumber = sequenceNumber;
+            return this;
+        }
+
+        /**
+         * Setter sFlow agent source index.
+         *
+         * @param sourceIndex agent source index.
+         * @return this class builder.
+         */
+        public Builder sourceIndex(int sourceIndex) {
+            this.sourceIndex = sourceIndex;
+            return this;
+        }
+
+        /**
+         * Setter sFlow agent source id.
+         *
+         * @param sourceId agent source id.
+         * @return this class builder.
+         */
+        public Builder sourceId(int sourceId) {
+            this.sourceId = sourceId;
+            return this;
+        }
+
+        /**
+         * Setter sFlow flow packet record count.
+         *
+         * @param numberOfRecords flow packet record count.
+         * @return this class builder.
+         */
+        public Builder numberOfRecords(int numberOfRecords) {
+            this.numberOfRecords = numberOfRecords;
+            return this;
+        }
+
+        /**
+         * Setter sFlow interface counter records.
+         *
+         * @param records interface counter records.
+         * @return this class builder.
+         */
+        public Builder records(List<Object> records) {
+            this.records = records;
+            return this;
+        }
+
+        /**
+         * Setter sFlow sample interface counter record.
+         *
+         * @param record sample interface counter record.
+         * @return this class builder.
+         */
+        public Builder record(Object record) {
+            this.records.add(record);
+            return this;
+        }
+
+        /**
+         * Checks arguments for sFlow sample interface counter.
+         */
+        private void checkArguments() {
+            checkState(type != null, "Invalid sample type.");
+            checkState(sourceId != 0, "Invalid source id.");
+            checkState(sequenceNumber != 0, "Invalid sequence number.");
+            checkState(numberOfRecords != 0, "Invalid number of records.");
+            checkState(records.size() != 0, "Interface counter record is empty.");
+        }
+
+        /**
+         * Builds sFlow interface counter sample.
+         *
+         * @return interface counter sample.
+         */
+        public CounterSample build() {
+            checkArguments();
+            return new CounterSample(this);
+        }
+    }
 }
