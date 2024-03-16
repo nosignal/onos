@@ -16,11 +16,18 @@
 package org.onosproject.sflow;
 
 import com.google.common.base.MoreObjects;
+import java.nio.ByteBuffer;
+import org.onlab.packet.BasePacket;
+import org.onlab.packet.Deserializer;
+
+import java.util.function.BiPredicate;
 
 /**
  * Represents ethernet counters for network interfaces.
  */
-public final class EthernetCounter {
+public final class EthernetCounter extends BasePacket {
+
+    public static final int ETHERNET_COUNTER_LENGTH = 52;
 
     private InterfaceCounter generic;
     private int dot3StatsAlignmentErrors;
@@ -198,6 +205,56 @@ public final class EthernetCounter {
                 .add("dot3StatsInternalMacReceiveErrors", dot3StatsInternalMacReceiveErrors)
                 .add("dot3StatsSymbolErrors", dot3StatsSymbolErrors)
                 .toString();
+    }
+
+    /**
+     * Deserializer function for sFlow ethernet counter.
+     *
+     * @return deserializer function
+     */
+    public static Deserializer<EthernetCounter> deserializer() {
+        return (data, offset, length) -> {
+
+            BiPredicate<ByteBuffer, Integer> isValidBuffer = (b, l)
+                    -> b.hasRemaining() && b.remaining() >= l;
+
+            ByteBuffer bb = ByteBuffer.wrap(data, offset, length);
+            byte[] ifCounterBytes;
+            if (!isValidBuffer.test(bb, InterfaceCounter.INTERFACE_COUNTER_LENGTH)) {
+                throw new IllegalStateException("Invalid interface ethernet counter buffer size.");
+            }
+
+            ifCounterBytes = new byte[InterfaceCounter.INTERFACE_COUNTER_LENGTH];
+            bb.get(ifCounterBytes);
+
+            InterfaceCounter interfaceCounter = InterfaceCounter.deserializer().deserialize(ifCounterBytes,
+                    0, InterfaceCounter.INTERFACE_COUNTER_LENGTH);
+            if (!isValidBuffer.test(bb, ETHERNET_COUNTER_LENGTH)) {
+                throw new IllegalStateException("Invalid interface ethernet counter buffer size.");
+            }
+
+            Builder builder = new Builder();
+            return builder.generic(interfaceCounter)
+                    .dot3StatsAlignmentErrors(bb.getInt())
+                    .dot3StatsFcsErrors(bb.getInt())
+                    .dot3StatsSingleCollisionFrames(bb.getInt())
+                    .dot3StatsMultipleCollisionFrames(bb.getInt())
+                    .dot3StatsSqeTestErrors(bb.getInt())
+                    .dot3StatsDeferredTransmissions(bb.getInt())
+                    .dot3StatsLateCollisions(bb.getInt())
+                    .dot3StatsExcessiveCollisions(bb.getInt())
+                    .dot3StatsInternalMacTransmitErrors(bb.getInt())
+                    .dot3StatsCarrierSenseErrors(bb.getInt())
+                    .dot3StatsFrameTooLongs(bb.getInt())
+                    .dot3StatsInternalMacReceiveErrors(bb.getInt())
+                    .dot3StatsSymbolErrors(bb.getInt())
+                    .build();
+        };
+    }
+
+    @Override
+    public byte[] serialize() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
