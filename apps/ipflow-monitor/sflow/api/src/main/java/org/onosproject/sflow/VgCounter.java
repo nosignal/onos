@@ -16,11 +16,18 @@
 package org.onosproject.sflow;
 
 import com.google.common.base.MoreObjects;
+import java.nio.ByteBuffer;
+import org.onlab.packet.BasePacket;
+import org.onlab.packet.Deserializer;
+
+import java.util.function.BiPredicate;
 
 /**
  * Represents VG counters for network interfaces.
  */
-public final class VgCounter {
+public final class VgCounter extends BasePacket {
+
+    public static final int VG_COUNTER_LENGTH = 80;
 
     private InterfaceCounter generic;
     private int dot12InHighPriorityFrames;
@@ -211,6 +218,58 @@ public final class VgCounter {
                 .add("dot12HCInNormPriorityOctets", dot12HCInNormPriorityOctets)
                 .add("dot12HCOutHighPriorityOctets", dot12HCOutHighPriorityOctets)
                 .toString();
+    }
+
+    /**
+     * Deserializer function for sFlow interface vg counter.
+     *
+     * @return deserializer function
+     */
+    public static Deserializer<VgCounter> deserializer() {
+        return (data, offset, length) -> {
+
+            BiPredicate<ByteBuffer, Integer> isValidBuffer = (b, l)
+                    -> b.hasRemaining() && b.remaining() >= l;
+
+            ByteBuffer bb = ByteBuffer.wrap(data, offset, length);
+            byte[] ifCounterBytes;
+            if (!isValidBuffer.test(bb, InterfaceCounter.INTERFACE_COUNTER_LENGTH)) {
+                throw new IllegalStateException("Invalid interface vg counter buffer size.");
+            }
+
+            ifCounterBytes = new byte[InterfaceCounter.INTERFACE_COUNTER_LENGTH];
+            bb.get(ifCounterBytes);
+
+            InterfaceCounter interfaceCounter = InterfaceCounter.deserializer().deserialize(ifCounterBytes,
+                    0, InterfaceCounter.INTERFACE_COUNTER_LENGTH);
+            if (!isValidBuffer.test(bb, VG_COUNTER_LENGTH)) {
+                throw new IllegalStateException("Invalid interface vg counter buffer size.");
+            }
+
+            Builder builder = new Builder();
+            return builder.generic(interfaceCounter)
+                    .dot12InHighPriorityFrames(bb.getInt())
+                    .dot12InHighPriorityOctets(bb.getLong())
+                    .dot12InNormPriorityFrames(bb.getInt())
+                    .dot12InNormPriorityOctets(bb.getLong())
+                    .dot12InIpmErrors(bb.getInt())
+                    .dot12InOversizeFrameErrors(bb.getInt())
+                    .dot12InDataErrors(bb.getInt())
+                    .dot12InNullAddressedFrames(bb.getInt())
+                    .dot12OutHighPriorityFrames(bb.getInt())
+                    .dot12OutHighPriorityOctets(bb.getLong())
+                    .dot12TransitionIntoTrainings(bb.getInt())
+                    .dot12HCInHighPriorityOctets(bb.getLong())
+                    .dot12HCInNormPriorityOctets(bb.getLong())
+                    .dot12HCOutHighPriorityOctets(bb.getLong())
+                    .build();
+
+        };
+    }
+
+    @Override
+    public byte[] serialize() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**

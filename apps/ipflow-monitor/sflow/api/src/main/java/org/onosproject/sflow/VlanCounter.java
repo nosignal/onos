@@ -16,11 +16,19 @@
 package org.onosproject.sflow;
 
 import com.google.common.base.MoreObjects;
+import java.nio.ByteBuffer;
+import org.onlab.packet.BasePacket;
+import org.onlab.packet.Deserializer;
+
+import java.util.function.BiPredicate;
 
 /**
  * Represents VLAN counters for network interfaces.
  */
-public final class VlanCounter {
+public final class VlanCounter extends BasePacket {
+
+    public static final int VLAN_COUNTER_LENGTH = 28;
+
     private int vlanId;
     private long octets;
     private int ucastPkts;
@@ -102,6 +110,38 @@ public final class VlanCounter {
                 .add("broadcastPkts", broadcastPkts)
                 .add("discards", discards)
                 .toString();
+    }
+
+    /**
+     * Deserializer function for sFlow interface vlan counter.
+     *
+     * @return deserializer function
+     */
+    public static Deserializer<VlanCounter> deserializer() {
+        return (data, offset, length) -> {
+
+            BiPredicate<ByteBuffer, Integer> isValidBuffer = (b, l)
+                    -> b.hasRemaining() && b.remaining() >= l;
+
+            ByteBuffer bb = ByteBuffer.wrap(data, offset, length);
+            if (!isValidBuffer.test(bb, VLAN_COUNTER_LENGTH)) {
+                throw new IllegalStateException("Invalid interface vlan counter buffer size.");
+            }
+
+            Builder builder = new Builder();
+            return builder.vlanId(bb.getInt())
+                    .octets(bb.getLong())
+                    .ucastPkts(bb.getInt())
+                    .multicastPkts(bb.getInt())
+                    .broadcastPkts(bb.getInt())
+                    .discards(bb.getInt())
+                    .build();
+        };
+    }
+
+    @Override
+    public byte[] serialize() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
