@@ -17,7 +17,6 @@ package org.onosproject.sflow;
 
 import com.google.common.base.MoreObjects;
 import java.nio.ByteBuffer;
-import org.onlab.packet.BasePacket;
 import org.onlab.packet.Deserializer;
 
 import java.util.function.BiPredicate;
@@ -25,7 +24,7 @@ import java.util.function.BiPredicate;
 /**
  * Represents VG counters for network interfaces.
  */
-public final class VgCounter extends BasePacket {
+public final class VgCounter extends CounterPacket {
 
     public static final int VG_COUNTER_LENGTH = 80;
 
@@ -265,11 +264,6 @@ public final class VgCounter extends BasePacket {
                     .build();
 
         };
-    }
-
-    @Override
-    public byte[] serialize() {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**

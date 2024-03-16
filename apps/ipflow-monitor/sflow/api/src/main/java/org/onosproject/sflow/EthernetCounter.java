@@ -17,7 +17,6 @@ package org.onosproject.sflow;
 
 import com.google.common.base.MoreObjects;
 import java.nio.ByteBuffer;
-import org.onlab.packet.BasePacket;
 import org.onlab.packet.Deserializer;
 
 import java.util.function.BiPredicate;
@@ -25,7 +24,7 @@ import java.util.function.BiPredicate;
 /**
  * Represents ethernet counters for network interfaces.
  */
-public final class EthernetCounter extends BasePacket {
+public final class EthernetCounter extends CounterPacket {
 
     public static final int ETHERNET_COUNTER_LENGTH = 52;
 
@@ -250,11 +249,6 @@ public final class EthernetCounter extends BasePacket {
                     .dot3StatsSymbolErrors(bb.getInt())
                     .build();
         };
-    }
-
-    @Override
-    public byte[] serialize() {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**

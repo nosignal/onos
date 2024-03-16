@@ -18,7 +18,6 @@ package org.onosproject.sflow;
 import com.google.common.base.MoreObjects;
 import static com.google.common.base.Preconditions.checkState;
 import java.nio.ByteBuffer;
-import org.onlab.packet.BasePacket;
 import org.onlab.packet.Deserializer;
 
 import java.util.function.BiPredicate;
@@ -26,7 +25,7 @@ import java.util.function.BiPredicate;
 /**
  * Represents interface counters for network interfaces.
  */
-public final class InterfaceCounter extends BasePacket {
+public final class InterfaceCounter extends CounterPacket {
 
     public static final int INTERFACE_COUNTER_LENGTH = 88;
 
@@ -370,11 +369,6 @@ public final class InterfaceCounter extends BasePacket {
                     .ifPromiscuousMode(bb.getInt())
                     .build();
         };
-    }
-
-    @Override
-    public byte[] serialize() {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**

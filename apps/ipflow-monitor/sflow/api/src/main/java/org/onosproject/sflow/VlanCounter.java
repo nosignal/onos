@@ -17,7 +17,6 @@ package org.onosproject.sflow;
 
 import com.google.common.base.MoreObjects;
 import java.nio.ByteBuffer;
-import org.onlab.packet.BasePacket;
 import org.onlab.packet.Deserializer;
 
 import java.util.function.BiPredicate;
@@ -25,7 +24,7 @@ import java.util.function.BiPredicate;
 /**
  * Represents VLAN counters for network interfaces.
  */
-public final class VlanCounter extends BasePacket {
+public final class VlanCounter extends CounterPacket {
 
     public static final int VLAN_COUNTER_LENGTH = 28;
 
@@ -137,11 +136,6 @@ public final class VlanCounter extends BasePacket {
                     .discards(bb.getInt())
                     .build();
         };
-    }
-
-    @Override
-    public byte[] serialize() {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**

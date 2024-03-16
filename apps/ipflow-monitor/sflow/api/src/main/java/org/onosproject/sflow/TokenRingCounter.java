@@ -17,7 +17,6 @@ package org.onosproject.sflow;
 
 import com.google.common.base.MoreObjects;
 import java.nio.ByteBuffer;
-import org.onlab.packet.BasePacket;
 import org.onlab.packet.Deserializer;
 
 import java.util.function.BiPredicate;
@@ -25,7 +24,7 @@ import java.util.function.BiPredicate;
 /**
  * Represents Token Ring counters for network interfaces.
  */
-public final class TokenRingCounter extends BasePacket {
+public final class TokenRingCounter extends CounterPacket {
 
     public static final int TOKENRING_COUNTER_LENGTH = 78;
 
@@ -315,11 +314,6 @@ public final class TokenRingCounter extends BasePacket {
                     .dot5StatsFreqErrors(bb.getInt())
                     .build();
         };
-    }
-
-    @Override
-    public byte[] serialize() {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
