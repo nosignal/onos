@@ -16,11 +16,18 @@
 package org.onosproject.sflow;
 
 import com.google.common.base.MoreObjects;
+import java.nio.ByteBuffer;
+import org.onlab.packet.BasePacket;
+import org.onlab.packet.Deserializer;
+
+import java.util.function.BiPredicate;
 
 /**
  * Represents Token Ring counters for network interfaces.
  */
-public final class TokenRingCounter {
+public final class TokenRingCounter extends BasePacket {
+
+    public static final int TOKENRING_COUNTER_LENGTH = 78;
 
     private InterfaceCounter generic;
     private int dot5StatsLineErrors;
@@ -258,6 +265,61 @@ public final class TokenRingCounter {
                 .add("dot5StatsSingles", dot5StatsSingles)
                 .add("dot5StatsFreqErrors", dot5StatsFreqErrors)
                 .toString();
+    }
+
+    /**
+     * Deserializer function for sFlow token ring counter.
+     *
+     * @return deserializer function
+     */
+    public static Deserializer<TokenRingCounter> deserializer() {
+        return (data, offset, length) -> {
+
+            BiPredicate<ByteBuffer, Integer> isValidBuffer = (b, l)
+                    -> b.hasRemaining() && b.remaining() >= l;
+
+            ByteBuffer bb = ByteBuffer.wrap(data, offset, length);
+            byte[] ifCounterBytes;
+            if (!isValidBuffer.test(bb, InterfaceCounter.INTERFACE_COUNTER_LENGTH)) {
+                throw new IllegalStateException("Invalid token ring counter data.");
+            }
+
+            ifCounterBytes = new byte[InterfaceCounter.INTERFACE_COUNTER_LENGTH];
+            bb.get(ifCounterBytes);
+
+            InterfaceCounter interfaceCounter = InterfaceCounter.deserializer().deserialize(ifCounterBytes,
+                    0, InterfaceCounter.INTERFACE_COUNTER_LENGTH);
+            if (!isValidBuffer.test(bb, TOKENRING_COUNTER_LENGTH)) {
+                throw new IllegalStateException("Invalid token ring counter buffer size.");
+            }
+
+            Builder builder = new Builder();
+            return builder.generic(interfaceCounter)
+                    .dot5StatsLineErrors(bb.getInt())
+                    .dot5StatsBurstErrors(bb.getInt())
+                    .dot5StatsAcErrors(bb.getInt())
+                    .dot5StatsAbortTransErrors(bb.getInt())
+                    .dot5StatsInternalErrors(bb.getInt())
+                    .dot5StatsLostFrameErrors(bb.getInt())
+                    .dot5StatsReceiveCongestions(bb.getInt())
+                    .dot5StatsFrameCopiedErrors(bb.getInt())
+                    .dot5StatsTokenErrors(bb.getInt())
+                    .dot5StatsSoftErrors(bb.getInt())
+                    .dot5StatsHardErrors(bb.getInt())
+                    .dot5StatsSignalLoss(bb.getInt())
+                    .dot5StatsTransmitBeacons(bb.getInt())
+                    .dot5StatsRecoverys(bb.getInt())
+                    .dot5StatsLobeWires(bb.getInt())
+                    .dot5StatsRemoves(bb.getInt())
+                    .dot5StatsSingles(bb.getInt())
+                    .dot5StatsFreqErrors(bb.getInt())
+                    .build();
+        };
+    }
+
+    @Override
+    public byte[] serialize() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
