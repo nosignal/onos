@@ -20,6 +20,8 @@ import org.onlab.packet.Deserializer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiPredicate;
+import java.nio.ByteBuffer;
 
 import com.google.common.base.MoreObjects;
 
@@ -59,8 +61,10 @@ public final class CounterSample extends SflowSample {
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     */
 
+    public static final int COUNTER_HEADER_LENGTH = 20;
+    public static final int RECORD_MIN_HEADER_LENGTH = 8;
 
-    private List<Object> records;
+    private List<CounterRecord> records;
 
     private CounterSample(Builder builder) {
         this.enterprise = builder.enterprise;
@@ -78,7 +82,7 @@ public final class CounterSample extends SflowSample {
      *
      * @return counter records.
      */
-    public List<Object> getRecords() {
+    public List<CounterRecord> getRecords() {
         return records;
     }
 
@@ -89,7 +93,35 @@ public final class CounterSample extends SflowSample {
      */
     public static Deserializer<CounterSample> deserializer() {
         return (data, offset, length) -> {
-            return null;
+            BiPredicate<ByteBuffer, Integer> isValidBuffer = (b, l)
+                    -> b.hasRemaining() && b.remaining() >= l;
+
+            ByteBuffer bb = ByteBuffer.wrap(data, offset, length);
+            if (!isValidBuffer.test(bb, (COUNTER_HEADER_LENGTH + RECORD_MIN_HEADER_LENGTH))) {
+                throw new IllegalStateException("Invalid interface sample counter buffer size.");
+            }
+            Builder builder = new Builder();
+            builder.type(SflowSample.Type.getType(bb.getInt()))
+                    .length(bb.getInt())
+                    .sequenceNumber(bb.getInt())
+                    .sourceIndex(bb.getInt())
+                    .numberOfRecords(bb.getInt());
+
+            while (bb.hasRemaining()) {
+                int counterType = bb.getInt();
+                int counterLength = bb.getInt();
+                bb.position(bb.position() - RECORD_MIN_HEADER_LENGTH);
+                int recordLenght = counterLength + RECORD_MIN_HEADER_LENGTH;
+                if (bb.remaining() < recordLenght) {
+                    break;
+                }
+                byte[] recordBytes = new byte[recordLenght];
+                bb.get(recordBytes);
+                builder.record(CounterRecord.deserializer()
+                        .deserialize(recordBytes, 0, recordLenght));
+            }
+            return builder.build();
+
         };
     }
 
@@ -171,7 +203,7 @@ public final class CounterSample extends SflowSample {
 
         private int numberOfRecords;
 
-        private List<Object> records = new LinkedList<>();
+        private List<CounterRecord> records = new LinkedList<>();
 
         /**
          * Setter sFlow enterprise id.
@@ -256,7 +288,7 @@ public final class CounterSample extends SflowSample {
          * @param records interface counter records.
          * @return this class builder.
          */
-        public Builder records(List<Object> records) {
+        public Builder records(List<CounterRecord> records) {
             this.records = records;
             return this;
         }
@@ -267,7 +299,7 @@ public final class CounterSample extends SflowSample {
          * @param record sample interface counter record.
          * @return this class builder.
          */
-        public Builder record(Object record) {
+        public Builder record(CounterRecord record) {
             this.records.add(record);
             return this;
         }
