@@ -17,11 +17,14 @@ package org.onosproject.sflow;
 
 import com.google.common.base.MoreObjects;
 import static com.google.common.base.Preconditions.checkState;
+import java.nio.ByteBuffer;
+import org.onlab.packet.BasePacket;
+import org.onlab.packet.Deserializer;
 
 /**
  * Represents interface counters for network interfaces.
  */
-public final class InterfaceCounter {
+public final class InterfaceCounter extends BasePacket {
     private int ifIndex;
     private int ifType;
     private long ifSpeed;
@@ -287,6 +290,42 @@ public final class InterfaceCounter {
                 .add("ifOutErrors", ifOutErrors)
                 .add("ifPromiscuousMode", ifPromiscuousMode)
                 .toString();
+    }
+
+    /**
+     * Deserializer function for sFlow packets.
+     *
+     * @return deserializer function
+     */
+    public static Deserializer<InterfaceCounter> deserializer() {
+        return (data, offset, length) -> {
+            ByteBuffer bb = ByteBuffer.wrap(data, offset, length);
+            Builder builder = new Builder();
+            return builder.ifIndex(bb.getShort())
+                    .ifType(bb.getShort())
+                    .ifSpeed(bb.getInt())
+                    .ifStatus(bb.getShort())
+                    .ifInOctets(bb.getLong())
+                    .ifInUcastPkts(bb.getInt())
+                    .ifInMulticastPkts(bb.getInt())
+                    .ifInBroadcastPkts(bb.getInt())
+                    .ifInDiscards(bb.getInt())
+                    .ifInErrors(bb.getInt())
+                    .ifInUnknownProtos(bb.getInt())
+                    .ifOutOctets(bb.getLong())
+                    .ifOutUcastPkts(bb.getInt())
+                    .ifOutMulticastPkts(bb.getInt())
+                    .ifOutBroadcastPkts(bb.getInt())
+                    .ifOutDiscards(bb.getInt())
+                    .ifOutErrors(bb.getInt())
+                    .ifPromiscuousMode(bb.getInt())
+                    .build();
+        };
+    }
+
+    @Override
+    public byte[] serialize() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     /**
