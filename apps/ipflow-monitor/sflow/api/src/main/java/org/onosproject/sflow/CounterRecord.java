@@ -19,12 +19,14 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-
+import java.nio.ByteBuffer;
 import org.onlab.packet.BasePacket;
 import org.onlab.packet.DeserializationException;
 import org.onlab.packet.Deserializer;
 
 import com.google.common.base.MoreObjects;
+
+import java.util.function.BiPredicate;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -32,6 +34,8 @@ import static com.google.common.base.Preconditions.checkState;
  * The sFlow interface counter record.
  */
 public final class CounterRecord extends BasePacket {
+
+    public static final int COUNTER_RECORD_HEADER_LENGTH = 8;
 
     private Type type;
 
@@ -83,9 +87,9 @@ public final class CounterRecord extends BasePacket {
         GENERIC(1, InterfaceCounter.deserializer()),
         ETHERNET(2, EthernetCounter.deserializer()),
         TOKENRING(3, TokenRingCounter.deserializer()),
-        FDDI(4, InterfaceCounter.deserializer()),
+        FDDI(4, FddiCounter.deserializer()),
         VG(5, VgCounter.deserializer()),
-        WAN(6, InterfaceCounter.deserializer()),
+        WAN(6, WanCounter.deserializer()),
         VLAN(7, VlanCounter.deserializer());
 
 
@@ -124,9 +128,27 @@ public final class CounterRecord extends BasePacket {
      *
      * @return data deserializer function
      */
-    public static Deserializer<CounterSample> deserializer() {
+    public static Deserializer<CounterRecord> deserializer() {
         return (data, offset, length) -> {
-            return null;
+            BiPredicate<ByteBuffer, Integer> isValidBuffer = (b, l)
+                    -> b.hasRemaining() && b.remaining() >= l;
+
+            ByteBuffer bb = ByteBuffer.wrap(data, offset, length);
+            byte[] ifCounterBytes;
+            if (!isValidBuffer.test(bb, COUNTER_RECORD_HEADER_LENGTH)) {
+                throw new IllegalStateException("Invalid interface counter record buffer size.");
+            }
+
+            int recordLength = bb.remaining();
+            byte[] record = new byte[recordLength];
+            bb.get(record);
+
+            Builder builder = new Builder();
+            return builder.type(Type.getType(bb.getInt()))
+                    .length(bb.getInt())
+                    .counterPacket((CounterPacket) Type.getType(bb.getInt()).getDecoder()
+                            .deserialize(record, 0, recordLength))
+                    .build();
         };
     }
 
