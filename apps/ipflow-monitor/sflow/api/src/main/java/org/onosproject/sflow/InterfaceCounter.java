@@ -21,15 +21,21 @@ import java.nio.ByteBuffer;
 import org.onlab.packet.BasePacket;
 import org.onlab.packet.Deserializer;
 
+import java.util.function.BiPredicate;
+
 /**
  * Represents interface counters for network interfaces.
  */
 public final class InterfaceCounter extends BasePacket {
+
+    public static final int INTERFACE_COUNTER_LENGTH = 88;
+
     private int ifIndex;
     private int ifType;
     private long ifSpeed;
-    private int ifDirection;
-    private int ifStatus;
+    private IfDirection ifDirection;
+    private IfStatus adminStatus;
+    private IfStatus operStatus;
     private long ifInOctets;
     private int ifInUcastPkts;
     private int ifInMulticastPkts;
@@ -50,7 +56,8 @@ public final class InterfaceCounter extends BasePacket {
         this.ifType = builder.ifType;
         this.ifSpeed = builder.ifSpeed;
         this.ifDirection = builder.ifDirection;
-        this.ifStatus = builder.ifStatus;
+        this.adminStatus = builder.adminStatus;
+        this.operStatus = builder.operStatus;
         this.ifInOctets = builder.ifInOctets;
         this.ifInUcastPkts = builder.ifInUcastPkts;
         this.ifInMulticastPkts = builder.ifInMulticastPkts;
@@ -65,6 +72,31 @@ public final class InterfaceCounter extends BasePacket {
         this.ifOutDiscards = builder.ifOutDiscards;
         this.ifOutErrors = builder.ifOutErrors;
         this.ifPromiscuousMode = builder.ifPromiscuousMode;
+    }
+
+    /**
+     * Bit field with the following bits.
+     * assigned bit 0 = ifAdminStatus
+     * (0 = down, 1 = up)
+     * bit 1 = ifOperStatus
+     * (0 = down, 1 = up)
+     */
+    public enum IfStatus {
+        DOWN,
+        UP;
+    }
+
+    /**
+     * Derived from MAU MIB (RFC 2668).
+     * 0 = unknown, 1=full-duplex,
+     * 2=half-duplex, 3 = in, 4=out
+     */
+    public enum IfDirection {
+        UNKNOWN,
+        FULL_DUPLEX,
+        HALF_DUPLEX,
+        IN,
+        OUT;
     }
 
     /**
@@ -99,17 +131,26 @@ public final class InterfaceCounter extends BasePacket {
      *
      * @return interface flow direction.
      */
-    public int getIfDirection() {
+    public IfDirection getIfDirection() {
         return ifDirection;
     }
 
     /**
-     * Get interface status.
+     * Get interface admin status.
      *
      * @return interface status.
      */
-    public int getIfStatus() {
-        return ifStatus;
+    public IfStatus getAdminStatus() {
+        return adminStatus;
+    }
+
+    /**
+     * Get interface operational status.
+     *
+     * @return interface status.
+     */
+    public IfStatus getOperStatus() {
+        return operStatus;
     }
 
     /**
@@ -274,7 +315,8 @@ public final class InterfaceCounter extends BasePacket {
                 .add("ifType", ifType)
                 .add("ifSpeed", ifSpeed)
                 .add("ifDirection", ifDirection)
-                .add("ifStatus", ifStatus)
+                .add("adminStatus", adminStatus)
+                .add("operStatus", operStatus)
                 .add("ifInOctets", ifInOctets)
                 .add("ifInUcastPkts", ifInUcastPkts)
                 .add("ifInMulticastPkts", ifInMulticastPkts)
@@ -293,18 +335,25 @@ public final class InterfaceCounter extends BasePacket {
     }
 
     /**
-     * Deserializer function for sFlow packets.
+     * Deserializer function for sFlow interface counter.
      *
      * @return deserializer function
      */
     public static Deserializer<InterfaceCounter> deserializer() {
         return (data, offset, length) -> {
+            BiPredicate<ByteBuffer, Integer> isValidBuffer = (b, l)
+                    -> b.hasRemaining() && b.remaining() >= l;
+
             ByteBuffer bb = ByteBuffer.wrap(data, offset, length);
+            if (!isValidBuffer.test(bb, INTERFACE_COUNTER_LENGTH)) {
+                throw new IllegalStateException("Invalid interface counter byte buffer size");
+            }
+
             Builder builder = new Builder();
-            return builder.ifIndex(bb.getShort())
-                    .ifType(bb.getShort())
-                    .ifSpeed(bb.getInt())
-                    .ifStatus(bb.getShort())
+            return builder.ifIndex(bb.getInt())
+                    .ifType(bb.getInt())
+                    .ifSpeed(bb.getLong())
+                    .ifStatus(bb.getInt())
                     .ifInOctets(bb.getLong())
                     .ifInUcastPkts(bb.getInt())
                     .ifInMulticastPkts(bb.getInt())
@@ -336,8 +385,9 @@ public final class InterfaceCounter extends BasePacket {
         private int ifIndex;
         private int ifType;
         private long ifSpeed;
-        private int ifDirection;
-        private int ifStatus;
+        private IfDirection ifDirection;
+        private IfStatus adminStatus;
+        private IfStatus operStatus;
         private long ifInOctets;
         private int ifInUcastPkts;
         private int ifInMulticastPkts;
@@ -393,8 +443,26 @@ public final class InterfaceCounter extends BasePacket {
          * @param ifDirection interface flow direction.
          * @return this builder instance.
          */
-        public Builder ifDirection(int ifDirection) {
-            this.ifDirection = ifDirection;
+        public Builder ifDirection(int direction) {
+            switch (direction) {
+                case 0:
+                    this.ifDirection = IfDirection.UNKNOWN;
+                    break;
+                case 1:
+                    this.ifDirection = IfDirection.FULL_DUPLEX;
+                    break;
+                case 2:
+                    this.ifDirection = IfDirection.HALF_DUPLEX;
+                    break;
+                case 3:
+                    this.ifDirection = IfDirection.IN;
+                    break;
+                case 4:
+                    this.ifDirection = IfDirection.OUT;
+                    break;
+                default:
+                    this.ifDirection = IfDirection.UNKNOWN;
+            }
             return this;
         }
 
@@ -405,7 +473,28 @@ public final class InterfaceCounter extends BasePacket {
          * @return this builder instance.
          */
         public Builder ifStatus(int ifStatus) {
-            this.ifStatus = ifStatus;
+           switch (ifStatus) {
+               case 0:
+                   this.adminStatus = IfStatus.DOWN;
+                   this.operStatus = IfStatus.DOWN;
+                   break;
+               case 1:
+                   this.adminStatus = IfStatus.DOWN;
+                   this.operStatus = IfStatus.UP;
+                   break;
+               case 2:
+                   this.adminStatus = IfStatus.UP;
+                   this.operStatus = IfStatus.DOWN;
+                   break;
+               case 3:
+                   this.adminStatus = IfStatus.UP;
+                   this.operStatus = IfStatus.UP;
+                   break;
+               default:
+                   this.adminStatus = IfStatus.DOWN;
+                   this.operStatus = IfStatus.DOWN;
+                   break;
+           }
             return this;
         }
 
