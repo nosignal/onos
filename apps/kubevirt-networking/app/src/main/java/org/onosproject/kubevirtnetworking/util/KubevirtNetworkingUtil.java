@@ -424,7 +424,7 @@ public final class KubevirtNetworkingUtil {
                         .filter(n -> (NETWORK_PREFIX + n.name()).equals(name) ||
                                      (n.name() + "-net").equals(name))
                         .findAny().orElse(null);
-                if (network != null) {
+                if (network != null && interfaceJson.get(MAC) != null) {
                     // FIXME: we do not update IP address, as learning IP address
                     // requires much more time due to the lag from VM agent
                     String mac = interfaceJson.get(MAC).asText();
