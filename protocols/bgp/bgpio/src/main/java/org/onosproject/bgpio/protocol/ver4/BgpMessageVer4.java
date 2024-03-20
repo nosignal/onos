@@ -49,7 +49,7 @@ public abstract class BgpMessageVer4 {
      * Reader class for reading BGP messages from channel buffer.
      *
      */
-    static class Reader implements BgpMessageReader<BgpMessage> {
+   public  static class Reader implements BgpMessageReader<BgpMessage> {
         @Override
         public BgpMessage readFrom(ChannelBuffer cb, BgpHeader bgpHeader)
                 throws BgpParseException {

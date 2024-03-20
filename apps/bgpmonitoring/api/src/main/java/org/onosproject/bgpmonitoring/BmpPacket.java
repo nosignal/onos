@@ -19,13 +19,41 @@ package org.onosproject.bgpmonitoring;
 import org.onlab.packet.BasePacket;
 
 /**
- * Abstraction of an entity providing BMP Messages.
+ * Abstraction of an entity providing BMP Packet.
  */
-public abstract class BmpMessage extends BasePacket {
+public abstract class BmpPacket extends BasePacket {
 
     @Override
     public byte[] serialize() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+
+    /**
+     * Returns BMP packet length.
+     *
+     * @return BMP packet length
+     */
+    public abstract int getLength();
+
+    /**
+     * Returns BMP packet version.
+     *
+     * @return BMP packet version
+     */
+    public abstract BmpVersion getVersion();
+
+    /**
+     * Returns BMP message type.
+     *
+     * @return BMP message type
+     */
+    public abstract String getType();
+
+    /**
+     * Returns BMP message.
+     *
+     * @return BMP message
+     */
+    public abstract BmpMessage getMessage();
 
 }

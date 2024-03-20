@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-present Open Networking Foundation
+ * Copyright 2024-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package org.onosproject.bgpmonitoring;
 
 /**
- * Abstraction of an BMP controller. It handles BMP messages from BMP routers
+ * Service for interacting with the BMP controller.
  */
 public interface BmpController {
 
@@ -34,9 +34,9 @@ public interface BmpController {
     /**
      * Process bmp message and notify the appropriate listeners.
      *
-     * @param message   the message to process.
+     * @param packet   the BMP packet to process.
      * @throws BmpParseException on data processing error
      */
-    void processBmpPacket(BmpMessage message) throws BmpParseException;
+    void processBmpPacket(BmpPacket packet) throws BmpParseException;
 
 }

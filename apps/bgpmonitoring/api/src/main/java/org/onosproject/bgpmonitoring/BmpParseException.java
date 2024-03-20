@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-present Open Networking Foundation
+ * Copyright 2024-present Open Networking Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package org.onosproject.bgpmonitoring;
 /**
  * Custom Exception for BMP IO.
  */
-public class BmpParseException extends Exception {
+public class BmpParseException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 

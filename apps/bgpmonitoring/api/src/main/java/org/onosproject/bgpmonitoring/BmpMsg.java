@@ -16,31 +16,30 @@
 
 package org.onosproject.bgpmonitoring;
 
-
 /**
- * Enum to provide BMP Message Version.
+ * Enum to Provide the interface of BMP initiation message.
  */
-public enum BmpVersion {
-
-    BMP_3(3);
-
-    public final int packetVersion;
+public interface BmpMsg {
 
     /**
-     * Assign BMP PacketVersion with specified packetVersion.
+     * Returns BMP initiation message type.
      *
-     * @param packetVersion version of BMP
+     * @return BMP initiation message type
      */
-    BmpVersion(final int packetVersion) {
-        this.packetVersion = packetVersion;
-    }
+    public abstract short getType();
 
     /**
-     * Returns Packet version of BMP Message.
+     * Returns BMP initiation message length.
      *
-     * @return packetVersion
+     * @return BMP initiation message length
      */
-    public int getPacketVersion() {
-        return packetVersion;
-    }
+    public abstract short getLength();
+
+    /**
+     * Returns BMP initiation message.
+     *
+     * @return BMP initiation message
+     */
+    public abstract String getData();
+
 }
