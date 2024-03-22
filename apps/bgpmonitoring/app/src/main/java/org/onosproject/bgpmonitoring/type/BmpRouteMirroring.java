@@ -259,7 +259,7 @@ public final class BmpRouteMirroring extends RouteMirroringMessage {
          * Checks arguments for bgp route mirroring message.
          */
         private void checkArguments() {
-            checkState(perPeer != null, "Invalid bmp statistics per peer buffer.");
+            checkState(perPeer != null, "Invalid bmp route mirroring per peer buffer.");
             checkState(bgpMessage != null, "Invalid bgp message.");
         }
 

@@ -185,7 +185,7 @@ public final class BmpRouteMonitoringMessage extends RouteMonitoringMessage {
          * Checks arguments for bgp route monitoring message.
          */
         private void checkArguments() {
-            checkState(perPeer != null, "Invalid bmp statistics per peer buffer.");
+            checkState(perPeer != null, "Invalid bmp route monitor per peer buffer.");
             checkState(bgpMessage != null, "Invalid bgp message.");
         }
 
