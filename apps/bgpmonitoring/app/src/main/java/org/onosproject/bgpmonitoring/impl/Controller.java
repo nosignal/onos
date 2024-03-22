@@ -130,7 +130,7 @@ public class Controller {
                             Controller.SEND_BUFFER_SIZE));
             bootstrap.setOption("child.reuseAddress", true);
 
-            ChannelPipelineFactory pfact = null;
+            ChannelPipelineFactory pfact = new BmpPipelineFactory(bmpController);
 
             bootstrap.setPipelineFactory(pfact);
             InetSocketAddress inetSocketAddress = new InetSocketAddress(BMP_PORT_NUM);
