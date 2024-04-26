@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * Class representing a prediction template.
@@ -123,6 +124,56 @@ public final class PredictionTemplate {
      */
     public Condition getCondition() {
         return condition;
+    }
+
+    /**
+     * Compares this prediction template to the specified object. The result is true if and only if
+     * the argument is not null and is a PredictionTemplate object that represents the same template
+     * as this object.
+     *
+     * @param obj The object to compare this prediction template against.
+     * @return True if the given object represents a PredictionTemplate equivalent to this template.
+     * False otherwise.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        PredictionTemplate other = (PredictionTemplate) obj;
+        return Objects.equals(templateVersion, other.templateVersion) &&
+                Objects.equals(id, other.id) &&
+                Objects.equals(type, other.type) &&
+                Objects.equals(datasource, other.datasource) &&
+                Objects.equals(selector, other.selector) &&
+                Objects.equals(group, other.group) &&
+                Objects.equals(sort, other.sort) &&
+                Objects.equals(condition, other.condition);
+    }
+
+    /**
+     * Returns a hash code value for the prediction template.
+     *
+     * @return A hash code value for this prediction template.
+     */
+    @Override
+    public int hashCode() {
+        int result = 59;
+        result = result * 59 + (templateVersion != null ? templateVersion.hashCode() : 0);
+        result = result * 59 + (id != null ? id.hashCode() : 0);
+        result = result * 59 + (type != null ? type.hashCode() : 0);
+        result = result * 59 + (datasource != null ? datasource.hashCode() : 0);
+        result = result * 59 + (selector != null ? selector.hashCode() : 0);
+        result = result * 59 + (group != null ? group.hashCode() : 0);
+        result = result * 59 + (sort != null ? sort.hashCode() : 0);
+        result = result * 59 + (condition != null ? condition.hashCode() : 0);
+        return result;
     }
 
     /**
