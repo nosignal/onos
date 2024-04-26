@@ -23,6 +23,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Immutable class representing a Group with fields and an action.
@@ -59,6 +60,39 @@ public final class Group {
      */
     public String getAction() {
         return action;
+    }
+
+   /**
+     * Checks if this Group is equal to another object.
+     * The result is true if and only if the argument is not null and is a Group object with same fields and action.
+     *
+     * @param obj the object to compare this Group against
+     * @return true if the given object represents a Group equivalent to this Group, false otherwise
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+                return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+                return false;
+        }
+        Group group = (Group) obj;
+        return Objects.equals(fields, group.fields) && Objects.equals(action, group.action);
+    }
+
+    /**
+     * Returns a hash code value for the Group.
+     * This method is supported for the benefit of hash tables such as those provided by HashMap.
+     *
+     * @return a hash code value for this Group
+     */
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 59 * result + (fields != null ? fields.hashCode() : 0);
+        result = 59 * result + (action != null ? action.hashCode() : 0);
+        return result;
     }
 
     /**
