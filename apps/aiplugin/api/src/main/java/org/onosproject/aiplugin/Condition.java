@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * Immutable class representing a condition with name, field, match, value, action, and aggregation.
@@ -104,6 +105,52 @@ public final class Condition {
     }
 
     /**
+     * Checks if this Condition is equal to another object.
+     * The result is true if and only if the argument is not null and is a Condition object that
+     * has the same values for all fields.
+     *
+     * @param obj the object to compare this Condition against
+     * @return true if the given object represents a Condition equivalent to this one, false otherwise
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Condition other = (Condition) obj;
+        return Objects.equals(name, other.name)
+                && Objects.equals(field, other.field)
+                && Objects.equals(match, other.match)
+                && Objects.equals(value, other.value)
+                && Objects.equals(action, other.action)
+                && Objects.equals(aggregation, other.aggregation);
+    }
+
+    /**
+     * Returns a hash code value for the Condition.
+     * This method is supported for the benefit of hash tables such as those provided by HashMap.
+     *
+     * @return a hash code value for this Condition
+     */
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 59 * result + (name != null ? name.hashCode() : 0);
+        result = 59 * result + (field != null ? field.hashCode() : 0);
+        result = 59 * result + (match != null ? match.hashCode() : 0);
+        result = 59 * result + (value != null ? value.hashCode() : 0);
+        result = 59 * result + (action != null ? action.hashCode() : 0);
+        result = 59 * result + (aggregation != null ? aggregation.hashCode() : 0);
+        return result;
+    }
+
+    /**
      * Static method to create a new Builder instance.
      *
      * @return A new Builder for creating a Condition instance.
@@ -116,7 +163,6 @@ public final class Condition {
      * Builder class for Condition.
      */
     @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Builder {
         private String name;
         private String field;

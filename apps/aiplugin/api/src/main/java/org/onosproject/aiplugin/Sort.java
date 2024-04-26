@@ -23,6 +23,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Immutable class representing a sorting criteria with fields and an order.
@@ -59,6 +60,39 @@ public final class Sort {
      */
     public String getOrder() {
         return order;
+    }
+
+    /**
+     * Checks if this Sort is equal to another object.
+     * The result is true if and only if the argument is not null and is a Sort object with same fields and order.
+     *
+     * @param obj the object to compare this Sort against
+     * @return true if the given object represents a Sort equivalent to this Sort, false otherwise
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+                return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+                return false;
+        }
+        Sort selector = (Sort) obj;
+        return Objects.equals(fields, selector.fields) && Objects.equals(order, selector.order);
+    }
+
+    /**
+     * Returns a hash code value for the Sort.
+     * This method is supported for the benefit of hash tables such as those provided by HashMap.
+     *
+     * @return a hash code value for this Sort
+     */
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 59 * result + (fields != null ? fields.hashCode() : 0);
+        result = 59 * result + (order != null ? order.hashCode() : 0);
+        return result;
     }
 
     /**
