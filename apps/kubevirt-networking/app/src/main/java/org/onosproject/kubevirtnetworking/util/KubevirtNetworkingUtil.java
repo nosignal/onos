@@ -457,6 +457,19 @@ public final class KubevirtNetworkingUtil {
     }
 
     /**
+     * Gets the number of tenant networks which have the identical segmentation ID of the given network.
+     *
+     * @param networkService    network service
+     * @param network           kubevirt network
+     * @return number of tenant networks
+     */
+    public static long numOfDupSegNetworks(KubevirtNetworkService networkService, KubevirtNetwork network) {
+        return networkService.networks().stream()
+                .filter(n -> Objects.equals(network.segmentId(), n.segmentId()))
+                .filter(n -> !Objects.equals(network.networkId(), n.networkId())).count();
+    }
+
+    /**
      * Obtains the tunnel bridge to tenant bridge patch port number.
      *
      * @param deviceService device service

@@ -16,6 +16,7 @@
 package org.onosproject.kubevirtnetworking.impl;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.lang.StringUtils;
 import org.onlab.packet.Ethernet;
 import org.onlab.packet.IPv4;
 import org.onlab.packet.Ip4Address;
@@ -51,8 +52,12 @@ import org.onosproject.kubevirtnode.api.KubevirtNodeEvent;
 import org.onosproject.kubevirtnode.api.KubevirtNodeListener;
 import org.onosproject.kubevirtnode.api.KubevirtNodeService;
 import org.onosproject.mastership.MastershipService;
+import org.onosproject.net.Device;
 import org.onosproject.net.DeviceId;
+import org.onosproject.net.Port;
 import org.onosproject.net.PortNumber;
+import org.onosproject.net.device.DeviceEvent;
+import org.onosproject.net.device.DeviceListener;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.driver.DriverService;
 import org.onosproject.net.flow.DefaultTrafficSelector;
@@ -71,7 +76,9 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.slf4j.Logger;
 
+import java.util.Comparator;
 import java.util.Dictionary;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -97,6 +104,7 @@ import static org.onosproject.kubevirtnetworking.api.Constants.TENANT_ACL_EGRESS
 import static org.onosproject.kubevirtnetworking.api.Constants.TENANT_ACL_INGRESS_TABLE;
 import static org.onosproject.kubevirtnetworking.api.Constants.TENANT_ACL_RECIRC_TABLE;
 import static org.onosproject.kubevirtnetworking.api.Constants.TENANT_FORWARDING_TABLE;
+import static org.onosproject.kubevirtnetworking.api.Constants.TENANT_TO_TUNNEL_PREFIX;
 import static org.onosproject.kubevirtnetworking.api.KubevirtNetwork.Type.FLAT;
 import static org.onosproject.kubevirtnetworking.api.KubevirtNetwork.Type.VLAN;
 import static org.onosproject.kubevirtnetworking.impl.OsgiPropertyConstants.USE_SECURITY_GROUP;
@@ -108,6 +116,7 @@ import static org.onosproject.kubevirtnetworking.util.RulePopulatorUtil.computeC
 import static org.onosproject.kubevirtnetworking.util.RulePopulatorUtil.computeCtStateFlag;
 import static org.onosproject.kubevirtnetworking.util.RulePopulatorUtil.niciraConnTrackTreatmentBuilder;
 import static org.onosproject.kubevirtnode.api.KubevirtNode.Type.WORKER;
+import static org.onosproject.net.AnnotationKeys.PORT_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -205,6 +214,8 @@ public class KubevirtSecurityGroupHandler {
     private final KubevirtNetworkListener networkListener =
             new InternalNetworkListener();
 
+    private final DeviceListener bridgeListener = new InternalBridgeListener();
+
     private final ExecutorService eventExecutor = newSingleThreadExecutor(
             groupedThreads(this.getClass().getSimpleName(), "event-handler"));
 
@@ -219,6 +230,7 @@ public class KubevirtSecurityGroupHandler {
         portService.addListener(portListener);
         networkService.addListener(networkListener);
         configService.registerProperties(getClass());
+        deviceService.addListener(bridgeListener);
         nodeService.addListener(nodeListener);
 
         log.info("Started");
@@ -228,6 +240,7 @@ public class KubevirtSecurityGroupHandler {
     protected void deactivate() {
         securityGroupService.removeListener(securityGroupListener);
         portService.removeListener(portListener);
+        deviceService.removeListener(bridgeListener);
         configService.unregisterProperties(getClass(), false);
         nodeService.removeListener(nodeListener);
         networkService.removeListener(networkListener);
@@ -295,23 +308,14 @@ public class KubevirtSecurityGroupHandler {
         initializeAclTable(deviceId, ACL_RECIRC_TABLE, PortNumber.NORMAL, install);
     }
 
-    private void initializeTenantAclTable(KubevirtNetwork network,
-                                          DeviceId deviceId, boolean install) {
-        // FIXME: in bridge initialization phase, some patch ports may not be
-        // available until they are created, we wait for a while ensure all
-        // patch ports are created via network bootstrap
-        while (true) {
-            if (network.tenantToTunnelPort(deviceId) != null) {
-                break;
-            } else {
-                log.info("Wait for tenant patch ports creation for device {} " +
-                        "and network {}", deviceId, network.networkId());
-                waitFor(5);
+    private void initializeTenantAclTable(DeviceId deviceId, boolean install) {
+        for (Port port : deviceService.getPorts(deviceId)) {
+            String portName = port.annotations().value(PORT_NAME);
+            if (StringUtils.startsWithIgnoreCase(portName, TENANT_TO_TUNNEL_PREFIX)) {
+                initializeAclTable(deviceId, TENANT_ACL_RECIRC_TABLE, port.number(), install);
+                return;
             }
         }
-
-        PortNumber patchPort = network.tenantToTunnelPort(deviceId);
-        initializeAclTable(deviceId, TENANT_ACL_RECIRC_TABLE, patchPort, install);
     }
 
     private void initializeAclTable(DeviceId deviceId, int recircTable,
@@ -379,11 +383,11 @@ public class KubevirtSecurityGroupHandler {
         initializeProviderAclTable(node.intgBridge(), install);
     }
 
-    private void initializeTenantPipeline(KubevirtNetwork network,
-                                          KubevirtNode node, boolean install) {
+    private DeviceId initializeTenantPipelineWithoutAcl(KubevirtNetwork network,
+                                                        KubevirtNode node, boolean install) {
         DeviceId deviceId = network.tenantDeviceId(node.hostname());
         if (deviceId == null) {
-            return;
+            return null;
         }
 
         // we check whether the given device is available from the store
@@ -401,7 +405,17 @@ public class KubevirtSecurityGroupHandler {
         initializeTenantIngressTable(deviceId, install);
         initializeTenantEgressTable(deviceId, install);
         initializeTenantConnTrackTable(deviceId, install);
-        initializeTenantAclTable(network, deviceId, install);
+
+        return deviceId;
+    }
+
+    private void initializeTenantPipeline(KubevirtNetwork network,
+                                          KubevirtNode node, boolean install) {
+        DeviceId deviceId = initializeTenantPipelineWithoutAcl(network, node, install);
+        if (deviceId == null) {
+            return;
+        }
+        initializeTenantAclTable(deviceId, install);
     }
 
     private void updateSecurityGroupRule(KubevirtPort port,
@@ -1011,6 +1025,50 @@ public class KubevirtSecurityGroupHandler {
         }
     }
 
+    private class InternalBridgeListener implements DeviceListener {
+
+        @Override
+        public boolean isRelevant(DeviceEvent event) {
+            return event.subject().type() == Device.Type.SWITCH;
+        }
+
+        private boolean isRelevantHelper() {
+            return Objects.equals(localNodeId, leadershipService.getLeader(appId.name()));
+        }
+
+        @Override
+        public void event(DeviceEvent event) {
+            Device device = event.subject();
+            Port port = event.port();
+
+            switch (event.type()) {
+                case PORT_ADDED:
+                    eventExecutor.execute(() -> {
+                        if (!isRelevantHelper()) {
+                            return;
+                        }
+                        initializeTenantAclTable(device, port);
+                    });
+                    break;
+                case PORT_REMOVED:
+                    break;
+                default:
+                    // do nothing
+                    break;
+            }
+        }
+
+        private void initializeTenantAclTable(Device device, Port port) {
+
+            String portName = port.annotations().value(PORT_NAME);
+            if (!StringUtils.startsWithIgnoreCase(portName, TENANT_TO_TUNNEL_PREFIX)) {
+                return;
+            }
+
+            initializeAclTable(device.id(), TENANT_ACL_RECIRC_TABLE, port.number(), true);
+        }
+    }
+
     private class InternalNetworkListener implements KubevirtNetworkListener {
 
         private boolean isRelevantHelper() {
@@ -1036,7 +1094,9 @@ public class KubevirtSecurityGroupHandler {
                 return;
             }
 
-            Set<KubevirtNode> nodes = nodeService.completeNodes(WORKER);
+            List<KubevirtNode> nodes = nodeService.completeNodes(WORKER)
+                    .stream().sorted(Comparator.comparing(KubevirtNode::hostname))
+                    .collect(Collectors.toList());
 
             if (nodes.size() > 0) {
                 // now we wait 5s for all tenant bridges are created,
@@ -1045,7 +1105,7 @@ public class KubevirtSecurityGroupHandler {
                 waitFor(5);
 
                 for (KubevirtNode node : nodes) {
-                    initializeTenantPipeline(network, node, true);
+                    initializeTenantPipelineWithoutAcl(network, node, true);
                 }
             }
         }
