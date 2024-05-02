@@ -137,6 +137,11 @@ public class KubevirtSwitchingTenantHandler {
     }
 
     private void setIngressRules(KubevirtNetwork network, boolean install) {
+        // FIXME: due to the event ordering issue, we remove all ingress rules from KubevirtNetworkHandler class.
+        if (!install) {
+            return;
+        }
+
         if (network == null) {
             return;
         }
@@ -179,7 +184,7 @@ public class KubevirtSwitchingTenantHandler {
                     TUNNEL_DEFAULT_TABLE,
                     install);
 
-            log.debug("Install ingress rules for segment ID {}", network.segmentId());
+            log.debug("Set ingress rules for segment ID {}", network.segmentId());
         }
     }
 
@@ -218,7 +223,7 @@ public class KubevirtSwitchingTenantHandler {
                     TUNNEL_DEFAULT_TABLE,
                     install);
 
-            log.debug("Install ingress rules for segment ID {}", network.segmentId());
+            log.debug("Set ingress rules for segment ID {}", network.segmentId());
         }
     }
 
@@ -308,7 +313,7 @@ public class KubevirtSwitchingTenantHandler {
                     install);
         }
 
-        log.debug("Install egress rules for instance {}, segment ID {}",
+        log.debug("Set egress rules for instance {}, segment ID {}",
                 port.ipAddress(), network.segmentId());
     }
 
