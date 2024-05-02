@@ -335,7 +335,55 @@ public class KubevirtNetworkHandler {
 
     private void removeAllFlows(KubevirtNode node, KubevirtNetwork network) {
         DeviceId deviceId = network.tenantDeviceId(node.hostname());
+        removeIngressRules(network);
         flowService.purgeRules(deviceId);
+    }
+
+    private void removeIngressRules(KubevirtNetwork network) {
+        if (network == null) {
+            return;
+        }
+
+        if (network.type() == FLAT || network.type() == VLAN) {
+            return;
+        }
+
+        if (network.segmentId() == null) {
+            return;
+        }
+
+        for (KubevirtNode localNode : kubevirtNodeService.completeNodes(WORKER)) {
+
+            while (true) {
+                KubevirtNode updatedNode = kubevirtNodeService.node(localNode.hostname());
+                if (tunnelToTenantPort(deviceService, updatedNode, network) != null) {
+                    break;
+                } else {
+                    log.info("Waiting for tunnel to tenant patch port creation " +
+                            "on ingress rule setup on node {}", updatedNode);
+                    waitFor(3);
+                }
+            }
+
+            PortNumber patchPortNumber = tunnelToTenantPort(deviceService, localNode, network);
+
+            TrafficSelector.Builder sBuilder = DefaultTrafficSelector.builder()
+                    .matchTunnelId(Long.parseLong(network.segmentId()));
+
+            TrafficTreatment.Builder tBuilder = DefaultTrafficTreatment.builder()
+                    .setOutput(patchPortNumber);
+
+            flowService.setRule(
+                    appId,
+                    localNode.tunBridge(),
+                    sBuilder.build(),
+                    tBuilder.build(),
+                    PRIORITY_TUNNEL_RULE,
+                    TUNNEL_DEFAULT_TABLE,
+                    false);
+
+            log.debug("Set ingress rules for segment ID {}", network.segmentId());
+        }
     }
 
     private void removePatchInterface(KubevirtNode node, KubevirtNetwork network) {
