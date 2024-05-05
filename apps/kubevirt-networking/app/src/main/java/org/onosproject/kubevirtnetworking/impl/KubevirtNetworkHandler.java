@@ -1329,6 +1329,19 @@ public class KubevirtNetworkHandler {
                     setElbInternalIpArpResponseRules(node, true);
                 }
             }
+
+            for (KubevirtNetwork network : networkService.networks()) {
+                DeviceId deviceId = network.tenantDeviceId(node.hostname());
+                if (deviceId == null) {
+                    continue;
+                }
+                for (Port port : deviceService.getPorts(deviceId)) {
+                    String portName = port.annotations().value(PORT_NAME);
+                    if (StringUtils.startsWithIgnoreCase(portName, TENANT_TO_TUNNEL_PREFIX)) {
+                        installTenantIngressTransitionRule(deviceId, port, true);
+                    }
+                }
+            }
         }
 
         private void processNodeDeletion(KubevirtNode node) {
@@ -1407,6 +1420,30 @@ public class KubevirtNetworkHandler {
         }
     }
 
+    private void installTenantIngressTransitionRule(DeviceId deviceId, Port port, boolean install) {
+
+        String portName = port.annotations().value(PORT_NAME);
+        if (!StringUtils.startsWithIgnoreCase(portName, TENANT_TO_TUNNEL_PREFIX)) {
+            return;
+        }
+
+        TrafficSelector.Builder sBuilder = DefaultTrafficSelector.builder();
+        sBuilder.matchEthType(EthType.EtherType.IPV4.ethType().toShort())
+                .matchInPort(port.number());
+
+        TrafficTreatment.Builder tBuilder = DefaultTrafficTreatment.builder();
+        tBuilder.transition(TENANT_ACL_INGRESS_TABLE);
+
+        flowService.setRule(appId,
+                deviceId,
+                sBuilder.build(),
+                tBuilder.build(),
+                PRIORITY_IP_INGRESS_RULE,
+                TENANT_ICMP_TABLE,
+                install
+        );
+    }
+
     private class InternalBridgeListener implements DeviceListener {
 
         @Override
@@ -1429,7 +1466,7 @@ public class KubevirtNetworkHandler {
                         if (!isRelevantHelper()) {
                             return;
                         }
-                        installTenantIngressTransitionRule(device, port);
+                        installTenantIngressTransitionRule(device.id(), port, true);
                     });
                     break;
                 case PORT_REMOVED:
@@ -1437,30 +1474,6 @@ public class KubevirtNetworkHandler {
                     // do nothing
                     break;
             }
-        }
-
-        private void installTenantIngressTransitionRule(Device device, Port port) {
-
-            String portName = port.annotations().value(PORT_NAME);
-            if (!StringUtils.startsWithIgnoreCase(portName, TENANT_TO_TUNNEL_PREFIX)) {
-                return;
-            }
-
-            TrafficSelector.Builder sBuilder = DefaultTrafficSelector.builder();
-            sBuilder.matchEthType(EthType.EtherType.IPV4.ethType().toShort())
-                    .matchInPort(port.number());
-
-            TrafficTreatment.Builder tBuilder = DefaultTrafficTreatment.builder();
-            tBuilder.transition(TENANT_ACL_INGRESS_TABLE);
-
-            flowService.setRule(appId,
-                    device.id(),
-                    sBuilder.build(),
-                    tBuilder.build(),
-                    PRIORITY_IP_INGRESS_RULE,
-                    TENANT_ICMP_TABLE,
-                    true
-            );
         }
     }
 
