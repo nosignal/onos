@@ -432,6 +432,20 @@ public class KubevirtNetworkHandler {
         // security group related rules
         setTenantEgressTransitionRule(network.tenantDeviceId(node.hostname()), true);
 
+        // if patch port is available, we install ingress transition rule;
+        // otherwise the patch port event will trigger the rule installation
+        boolean installed = false;
+        for (Port port : deviceService.getPorts(deviceId)) {
+            String portName = port.annotations().value(PORT_NAME);
+            if (StringUtils.startsWithIgnoreCase(portName, TENANT_TO_TUNNEL_PREFIX)) {
+                setTenantIngressTransitionRule(deviceId, port, true);
+                installed = true;
+            }
+        }
+        if (!installed) {
+            log.warn("Installing ingress transition rule failed on tenant bridge {}", network.tenantBridgeName());
+        }
+
         log.info("Install default flow rules for tenant bridge {}", network.tenantBridgeName());
     }
 
@@ -1329,19 +1343,6 @@ public class KubevirtNetworkHandler {
                     setElbInternalIpArpResponseRules(node, true);
                 }
             }
-
-            for (KubevirtNetwork network : networkService.networks()) {
-                DeviceId deviceId = network.tenantDeviceId(node.hostname());
-                if (deviceId == null) {
-                    continue;
-                }
-                for (Port port : deviceService.getPorts(deviceId)) {
-                    String portName = port.annotations().value(PORT_NAME);
-                    if (StringUtils.startsWithIgnoreCase(portName, TENANT_TO_TUNNEL_PREFIX)) {
-                        installTenantIngressTransitionRule(deviceId, port, true);
-                    }
-                }
-            }
         }
 
         private void processNodeDeletion(KubevirtNode node) {
@@ -1420,7 +1421,7 @@ public class KubevirtNetworkHandler {
         }
     }
 
-    private void installTenantIngressTransitionRule(DeviceId deviceId, Port port, boolean install) {
+    private void setTenantIngressTransitionRule(DeviceId deviceId, Port port, boolean install) {
 
         String portName = port.annotations().value(PORT_NAME);
         if (!StringUtils.startsWithIgnoreCase(portName, TENANT_TO_TUNNEL_PREFIX)) {
@@ -1466,7 +1467,7 @@ public class KubevirtNetworkHandler {
                         if (!isRelevantHelper()) {
                             return;
                         }
-                        installTenantIngressTransitionRule(device.id(), port, true);
+                        setTenantIngressTransitionRule(device.id(), port, true);
                     });
                     break;
                 case PORT_REMOVED:
