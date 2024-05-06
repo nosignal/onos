@@ -70,7 +70,6 @@ import static org.onosproject.kubevirtnetworking.api.KubevirtNetwork.Type.FLAT;
 import static org.onosproject.kubevirtnetworking.api.KubevirtNetwork.Type.VLAN;
 import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.tunnelPort;
 import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.tunnelToTenantPort;
-import static org.onosproject.kubevirtnetworking.util.KubevirtNetworkingUtil.waitFor;
 import static org.onosproject.kubevirtnetworking.util.RulePopulatorUtil.buildExtension;
 import static org.onosproject.kubevirtnode.api.KubevirtNode.Type.MASTER;
 import static org.onosproject.kubevirtnode.api.KubevirtNode.Type.WORKER;
@@ -150,12 +149,21 @@ public class KubevirtSwitchingTenantHandler {
                 return;
             }
 
-            KubevirtNode updatedNode = kubevirtNodeService.node(node.hostname());
-            if (tunnelToTenantPort(deviceService, updatedNode, network) == null) {
-                continue;
+            if (network.type() == FLAT || network.type() == VLAN) {
+                return;
             }
 
-            PortNumber patchPortNumber = tunnelToTenantPort(deviceService, node, network);
+            if (network.segmentId() == null) {
+                return;
+            }
+
+            KubevirtNode updatedNode = kubevirtNodeService.node(node.hostname());
+            PortNumber patchPortNumber = tunnelToTenantPort(deviceService, updatedNode, network);
+            if (patchPortNumber == null) {
+                log.warn("Patch port of tenant {} is not ready for node {}",
+                        network.segmentId(), updatedNode.hostname());
+                continue;
+            }
 
             TrafficSelector.Builder sBuilder = DefaultTrafficSelector.builder()
                     .matchTunnelId(Long.parseLong(network.segmentId()));
@@ -206,22 +214,18 @@ public class KubevirtSwitchingTenantHandler {
                 continue;
             }
 
-            while (true) {
-                KubevirtNode updatedNode = kubevirtNodeService.node(localNode.hostname());
-                if (tunnelToTenantPort(deviceService, updatedNode, network) != null) {
-                    break;
-                } else {
-                    log.info("Waiting for tunnel to tenant patch port creation " +
-                             "on egress rule setup on node {}", updatedNode);
-                    waitFor(3);
-                }
-            }
-
             PortNumber patchPortNumber = tunnelToTenantPort(deviceService, remoteNode, network);
+            if (patchPortNumber == null) {
+                log.warn("Patch port of tenant {} is not ready for node {}",
+                        network.segmentId(), remoteNode.hostname());
+                continue;
+            }
 
             PortNumber tunnelPortNumber = tunnelPort(remoteNode, network);
             if (tunnelPortNumber == null) {
-                return;
+                log.warn("Tunnel port of tenant {} is not ready for node {}",
+                        network.segmentId(), remoteNode.hostname());
+                continue;
             }
 
             TrafficSelector.Builder sIpBuilder = DefaultTrafficSelector.builder()
